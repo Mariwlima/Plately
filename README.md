@@ -1,4 +1,4 @@
-# Meal Planner / Recipe Organizer
+# Meal Planner Recipe Organizer
 
 A simple browser-based meal planner for saving recipes, organizing them by category, marking favorites, tracking cooking time and difficulty, and building a shopping list from recipe ingredients.
 
