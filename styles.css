@@ -460,6 +460,21 @@ label textarea {
   text-align: center;
 }
 
+.lang-toggle {
+  margin-left: auto;
+  padding: 0 1rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--tomato);
+  border-color: var(--tomato);
+  background: rgba(216, 95, 69, 0.06);
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-toggle:hover {
+  background: var(--tomato);
+  color: #fff;
+}
 @media (max-width: 920px) {
   .app-shell {
     grid-template-columns: 1fr;
