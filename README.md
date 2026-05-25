@@ -1,4 +1,4 @@
-# Weekly Recipes 🥗
+# Weekly Recipes
 
 Plan meals. Save recipes. Shop smarter.
 
@@ -15,14 +15,24 @@ Everything runs directly in the browser with local storage, so no installation o
 ## Features
 
 - Create, edit, and delete recipes
+- Add photos to recipes
 - Filter recipes by:
   - Breakfast
   - Lunch
   - Dinner
+  - Desserts
+  - Snacks
+  - Seafood
+  - Meat
+  - Chicken
+  - Pasta
+  - Soup
   - Favorites
 - Search recipes by name or ingredient
 - Track cooking time and difficulty level
 - Generate shopping lists from recipe ingredients
+- Add custom shopping list items manually
+- Manage recipes, favorites, and shopping list from dashboard tabs
 - Switch between English and Portuguese
 - Save data locally using localStorage
 
@@ -32,7 +42,7 @@ Everything runs directly in the browser with local storage, so no installation o
 - **CSS3** – Flexbox, Grid, Custom Properties, Media Queries
 - **JavaScript (Vanilla)** – DOM manipulation, filtering, local state management
 - **localStorage API** – persistent browser storage
-- **Google Fonts (Inter)** – typography
+- **Google Fonts (Fraunces + Inter)** – typography
 
 ## Getting Started
 
@@ -60,7 +70,7 @@ Or simply open `index.html` directly in your browser.
 - Dark mode
 - Export/import recipes
 - Nutrition information
-- Recipe image upload
+- Recipe tags and notes
 
 ---
 
