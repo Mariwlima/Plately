@@ -3,22 +3,110 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Receitas da Semana</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>Plately</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="app-shell">
+    <!-- SPLASH SCREEN -->
+    <div class="splash-screen" id="splashScreen">
+      <div class="splash-logo">
+        <svg class="plately-icon plately-icon-splash" viewBox="0 0 140 140" aria-hidden="true">
+          <path d="M30 15 L30 115 M30 15 C70 15 90 30 90 55 C90 80 70 90 30 90" fill="none" stroke="#1E3D2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 105 C5 130 20 138 50 138 C80 138 95 130 95 105" fill="none" stroke="#1E3D2B" stroke-width="9" stroke-linecap="round"/>
+          <path d="M50 50 C30 50 22 70 35 85 C48 100 65 85 60 65 C57 53 53 50 50 50 Z" fill="#A8D08D" stroke="#1E3D2B" stroke-width="3"/>
+        </svg>
+        <p class="splash-text">Plately</p>
+        <p class="splash-tagline">PLANEJE. PREPARE. APROVEITE.</p>
+      </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div class="auth-screen" id="authScreen" hidden>
+      <div class="auth-card">
+        <div class="auth-brand">
+          <svg class="plately-icon plately-icon-login" viewBox="0 0 140 140" aria-hidden="true">
+            <path d="M30 15 L30 115 M30 15 C70 15 90 30 90 55 C90 80 70 90 30 90" fill="none" stroke="#1E3D2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 105 C5 130 20 138 50 138 C80 138 95 130 95 105" fill="none" stroke="#1E3D2B" stroke-width="9" stroke-linecap="round"/>
+            <path d="M50 50 C30 50 22 70 35 85 C48 100 65 85 60 65 C57 53 53 50 50 50 Z" fill="#A8D08D" stroke="#1E3D2B" stroke-width="3"/>
+          </svg>
+          <h1>Plately</h1>
+          <p id="authSubtitle">Entre para acessar seu caderno de receitas</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" type="button" data-auth-tab="login" id="authTabLogin">Entrar</button>
+          <button class="auth-tab" type="button" data-auth-tab="signup" id="authTabSignup">Criar conta</button>
+        </div>
+
+        <form id="authForm" class="auth-form">
+          <label id="authNameField" hidden>
+            <span id="authNameLabel">Nome</span>
+            <input id="authName" type="text" autocomplete="name" placeholder="Seu nome" />
+          </label>
+          <label>
+            <span id="authEmailLabel">E-mail</span>
+            <input id="authEmail" type="email" required autocomplete="email" placeholder="seu@email.com" />
+          </label>
+          <label>
+            <span id="authPasswordLabel">Senha</span>
+            <input id="authPassword" type="password" required autocomplete="current-password" minlength="8" placeholder="••••••••" />
+          </label>
+          <div class="password-strength" id="passwordStrength" hidden>
+            <div class="strength-bars">
+              <span class="strength-bar" data-bar="1"></span>
+              <span class="strength-bar" data-bar="2"></span>
+              <span class="strength-bar" data-bar="3"></span>
+              <span class="strength-bar" data-bar="4"></span>
+            </div>
+            <ul class="strength-rules" id="strengthRules">
+              <li data-rule="length">Pelo menos 8 caracteres</li>
+              <li data-rule="upper">Uma letra maiúscula</li>
+              <li data-rule="number">Um número</li>
+              <li data-rule="symbol">Um símbolo (!@#$...)</li>
+            </ul>
+          </div>
+          <label class="terms-check" id="authTermsField" hidden>
+            <input id="authTermsCheckbox" type="checkbox" />
+            <span id="authTermsLabel">
+              Li e aceito os <a href="#" id="openTermsLink">Termos de Uso</a> e a <a href="#" id="openPrivacyLink">Política de Privacidade</a>
+            </span>
+          </label>
+          <p class="auth-error" id="authError" hidden></p>
+          <button class="primary-button auth-submit" type="submit" id="authSubmitBtn">Entrar</button>
+        </form>
+
+        <div class="auth-divider"><span id="authDividerText">ou</span></div>
+
+        <button class="google-button" type="button" id="googleSignInBtn">
+          <svg viewBox="0 0 48 48" aria-hidden="true" class="google-icon">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.5-.2-3-.5-4.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5c-7.4 0-13.8 4.1-17.2 10.2z"/>
+            <path fill="#4CAF50" d="M24 45.5c5.4 0 10.2-1.8 13.9-5l-6.4-5.4C29.5 36.6 26.9 37.5 24 37.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 41.3 16.2 45.5 24 45.5z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.4 5.4C40.9 36.5 44.5 31.4 44.5 25c0-1.5-.2-3-.9-4.5z"/>
+          </svg>
+          <span id="googleSignInText">Continuar com Google</span>
+        </button>
+      </div>
+    </div>
+
+    <main class="app-shell" id="appShell" hidden>
 
       <!-- SIDEBAR -->
-      <aside class="sidebar" aria-label="Navegação principal">
+      <aside class="sidebar" aria-label="Navegação principal" id="sidebar">
         <div class="brand-block">
-          <div class="brand-logo">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="currentColor" stroke="none"/></svg>
-          </div>
-          <span class="brand-name">Receitas da Semana</span>
+          <svg class="plately-icon plately-icon-sidebar" viewBox="0 0 140 140" aria-hidden="true">
+            <path d="M30 15 L30 115 M30 15 C70 15 90 30 90 55 C90 80 70 90 30 90" fill="none" stroke="#F2F7F2" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 105 C5 130 20 138 50 138 C80 138 95 130 95 105" fill="none" stroke="#F2F7F2" stroke-width="11" stroke-linecap="round"/>
+            <path d="M50 50 C30 50 22 70 35 85 C48 100 65 85 60 65 C57 53 53 50 50 50 Z" fill="#A8D08D" stroke="#F2F7F2" stroke-width="4"/>
+          </svg>
+          <span class="brand-name">Plately</span>
+          <button class="mobile-sidebar-toggle" type="button" id="mobileSidebarToggle" aria-label="Abrir menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          </button>
         </div>
 
         <nav class="sidebar-nav" aria-label="Menu principal">
@@ -64,7 +152,7 @@
           </button>
           <button class="nav-item" type="button" data-category-filter="snack">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
-            <span>Snacks</span>
+            <span>Lanches</span>
           </button>
         </nav>
 
@@ -75,12 +163,22 @@
             <button class="type-pill-nav" type="button" data-type-filter="chicken">Frango</button>
             <button class="type-pill-nav" type="button" data-type-filter="meat">Carne</button>
             <button class="type-pill-nav" type="button" data-type-filter="seafood">Frutos do mar</button>
-            <button class="type-pill-nav" type="button" data-type-filter="pasta">Pasta</button>
+            <button class="type-pill-nav" type="button" data-type-filter="pasta">Massa</button>
             <button class="type-pill-nav" type="button" data-type-filter="soup">Sopa</button>
           </div>
         </div>
 
         <div class="sidebar-footer">
+          <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <span class="user-email" id="userEmail">usuário@email.com</span>
+            <button class="settings-button" type="button" id="openSettingsBtn" aria-label="Configurações da conta">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+            <button class="logout-button" type="button" id="logoutBtn" aria-label="Sair">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            </button>
+          </div>
           <button class="lang-toggle-sidebar" type="button" id="langToggle">
             <span class="lang-opt active" id="langPT">PT</span>
             <span class="lang-sep">/</span>
@@ -130,7 +228,17 @@
             <p id="resultCount">0 receitas encontradas</p>
           </div>
           <div id="recipeGrid" class="recipe-grid"></div>
-          <p class="empty-state" id="emptyState">Nenhuma receita por aqui ainda.</p>
+          <div class="loading-state" id="loadingState" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <p id="loadingStateText">Carregando suas receitas...</p>
+          </div>
+          <div class="empty-state" id="emptyState">
+            <svg viewBox="0 0 140 140" aria-hidden="true" class="empty-state-icon">
+              <path d="M30 15 L30 115 M30 15 C70 15 90 30 90 55 C90 80 70 90 30 90" fill="none" stroke="#A8D08D" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 105 C5 130 20 138 50 138 C80 138 95 130 95 105" fill="none" stroke="#A8D08D" stroke-width="9" stroke-linecap="round"/>
+            </svg>
+            <p id="emptyStateText">Nenhuma receita por aqui ainda.</p>
+          </div>
         </section>
 
         <!-- SHOPPING VIEW -->
@@ -195,7 +303,7 @@
                   <option value="lunch">Almoço</option>
                   <option value="dinner">Jantar</option>
                   <option value="dessert">Sobremesas</option>
-                  <option value="snack">Snacks</option>
+                  <option value="snack">Lanches</option>
                 </select>
               </label>
               <label>
@@ -205,7 +313,7 @@
                   <option value="seafood">Frutos do mar</option>
                   <option value="meat">Carne</option>
                   <option value="chicken">Frango</option>
-                  <option value="pasta">Pasta</option>
+                  <option value="pasta">Massa</option>
                   <option value="soup">Sopa</option>
                 </select>
               </label>
@@ -286,6 +394,217 @@
       </article>
     </template>
 
-    <script src="app.js"></script>
+    <!-- TIMER FLOATING BUTTON -->
+    <button class="timer-fab" id="timerFab" type="button" aria-label="Abrir timer de preparo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/><path d="M12 2v3"/></svg>
+    </button>
+
+    <!-- TIMER MODAL -->
+    <div class="modal-overlay" id="timerOverlay" hidden>
+      <div class="modal timer-modal" id="timerModal" role="dialog" aria-modal="true" aria-labelledby="timerModalTitle">
+        <div class="modal-header">
+          <h2 id="timerModalTitle">Timer de preparo</h2>
+          <button class="modal-close" type="button" id="closeTimerModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body timer-body">
+          <div class="timer-display" id="timerDisplay">00:00</div>
+
+          <div class="timer-set-row">
+            <label class="timer-set-label">
+              <span id="timerMinutesLabel">Minutos</span>
+              <input id="timerMinutesInput" type="number" min="0" max="180" value="10" />
+            </label>
+            <button class="secondary-button" id="timerSetBtn" type="button">Definir</button>
+          </div>
+
+          <div class="timer-presets">
+            <button class="chip-preset" type="button" data-minutes="5">5 min</button>
+            <button class="chip-preset" type="button" data-minutes="10">10 min</button>
+            <button class="chip-preset" type="button" data-minutes="15">15 min</button>
+            <button class="chip-preset" type="button" data-minutes="30">30 min</button>
+          </div>
+
+          <div class="timer-controls">
+            <button class="primary-button timer-start" id="timerStartBtn" type="button">Iniciar</button>
+            <button class="secondary-button" id="timerPauseBtn" type="button" disabled>Pausar</button>
+            <button class="secondary-button" id="timerResetBtn" type="button">Resetar</button>
+          </div>
+
+          <p class="timer-status" id="timerStatus"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERMS OF USE MODAL -->
+    <div class="modal-overlay" id="termsOverlay" hidden>
+      <div class="modal legal-modal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+        <div class="modal-header">
+          <h2 id="termsTitle">Termos de Uso</h2>
+          <button class="modal-close" type="button" id="closeTermsModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body legal-body" id="termsBody">
+          <p class="legal-disclaimer">Este é um texto-modelo genérico para fins de demonstração e não substitui aconselhamento jurídico profissional.</p>
+          <h3>1. Aceitação dos termos</h3>
+          <p>Ao criar uma conta no Plately, você concorda com estes Termos de Uso. Se não concordar, não utilize a plataforma.</p>
+          <h3>2. Uso da plataforma</h3>
+          <p>O Plately é um caderno digital de receitas para uso pessoal e não comercial. Você é responsável pelo conteúdo que adiciona (receitas, fotos, listas de compras).</p>
+          <h3>3. Conta do usuário</h3>
+          <p>Você é responsável por manter a confidencialidade de sua senha e por todas as atividades realizadas em sua conta.</p>
+          <h3>4. Conteúdo do usuário</h3>
+          <p>Você mantém todos os direitos sobre as receitas e fotos que adiciona. Não reivindicamos propriedade sobre seu conteúdo.</p>
+          <h3>5. Alterações nos termos</h3>
+          <p>Podemos atualizar estes termos periodicamente. Mudanças significativas serão comunicadas dentro da plataforma.</p>
+          <h3>6. Encerramento de conta</h3>
+          <p>Você pode encerrar sua conta a qualquer momento através do menu de Configurações.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIVACY POLICY MODAL -->
+    <div class="modal-overlay" id="privacyOverlay" hidden>
+      <div class="modal legal-modal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+        <div class="modal-header">
+          <h2 id="privacyTitle">Política de Privacidade</h2>
+          <button class="modal-close" type="button" id="closePrivacyModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body legal-body" id="privacyBody">
+          <p class="legal-disclaimer">Este é um texto-modelo genérico para fins de demonstração e não substitui aconselhamento jurídico profissional.</p>
+          <h3>1. Dados que coletamos</h3>
+          <p>Coletamos seu nome, e-mail e, opcionalmente, data de nascimento, para criar e gerenciar sua conta. Receitas, fotos e listas de compras que você cria ficam associadas à sua conta.</p>
+          <h3>2. Como usamos seus dados</h3>
+          <p>Usamos seus dados exclusivamente para fornecer a funcionalidade da plataforma: autenticação, personalização e salvamento do seu conteúdo.</p>
+          <h3>3. Compartilhamento de dados</h3>
+          <p>Não vendemos nem compartilhamos seus dados pessoais com terceiros para fins de marketing.</p>
+          <h3>4. Armazenamento e segurança</h3>
+          <p>Seus dados de autenticação são gerenciados pelo Firebase (Google), que segue práticas de segurança padrão da indústria.</p>
+          <h3>5. Seus direitos</h3>
+          <p>Você pode acessar, corrigir ou excluir seus dados pessoais a qualquer momento através do menu de Configurações da conta.</p>
+          <h3>6. Contato</h3>
+          <p>Para dúvidas sobre privacidade, entre em contato através do e-mail informado no rodapé da plataforma.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsOverlay" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal-header">
+          <h2 id="settingsTitle">Configurações da conta</h2>
+          <button class="modal-close" type="button" id="closeSettingsModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-tabs">
+            <button class="settings-tab active" type="button" data-settings-tab="profile" id="settingsTabProfile">Perfil</button>
+            <button class="settings-tab" type="button" data-settings-tab="password" id="settingsTabPassword">Senha</button>
+            <button class="settings-tab" type="button" data-settings-tab="privacy" id="settingsTabPrivacy">Privacidade</button>
+          </div>
+
+          <form id="profileForm" class="settings-form" data-settings-panel="profile">
+            <label>
+              <span id="profileNameLabel">Nome</span>
+              <input id="profileName" type="text" required placeholder="Seu nome" />
+            </label>
+            <label>
+              <span id="profileBirthdayLabel">Data de nascimento</span>
+              <input id="profileBirthday" type="date" />
+            </label>
+            <p class="settings-note" id="profileEmailNote">E-mail: <span id="profileEmailDisplay"></span></p>
+            <p class="auth-error" id="profileError" hidden></p>
+            <p class="auth-success" id="profileSuccess" hidden></p>
+            <div class="form-actions">
+              <button class="primary-button" type="submit" id="profileSaveBtn">Salvar alterações</button>
+            </div>
+          </form>
+
+          <form id="passwordForm" class="settings-form" data-settings-panel="password" hidden>
+            <label>
+              <span id="currentPasswordLabel">Senha atual</span>
+              <input id="currentPassword" type="password" required autocomplete="current-password" placeholder="••••••••" />
+            </label>
+            <label>
+              <span id="newPasswordLabel">Nova senha</span>
+              <input id="newPassword" type="password" required autocomplete="new-password" minlength="8" placeholder="••••••••" />
+            </label>
+            <div class="password-strength" id="newPasswordStrength">
+              <div class="strength-bars">
+                <span class="strength-bar" data-bar="1"></span>
+                <span class="strength-bar" data-bar="2"></span>
+                <span class="strength-bar" data-bar="3"></span>
+                <span class="strength-bar" data-bar="4"></span>
+              </div>
+              <ul class="strength-rules" id="newStrengthRules">
+                <li data-rule="length">Pelo menos 8 caracteres</li>
+                <li data-rule="upper">Uma letra maiúscula</li>
+                <li data-rule="number">Um número</li>
+                <li data-rule="symbol">Um símbolo (!@#$...)</li>
+              </ul>
+            </div>
+            <p class="auth-error" id="passwordError" hidden></p>
+            <p class="auth-success" id="passwordSuccess" hidden></p>
+            <div class="form-actions">
+              <button class="primary-button" type="submit" id="passwordSaveBtn">Alterar senha</button>
+            </div>
+          </form>
+
+          <div class="settings-form" data-settings-panel="privacy" hidden>
+            <p class="settings-note" id="privacyIntro">Você pode revisar nossa Política de Privacidade e Termos de Uso a qualquer momento.</p>
+            <div class="privacy-links">
+              <button class="secondary-button" type="button" id="settingsOpenPrivacy">Política de Privacidade</button>
+              <button class="secondary-button" type="button" id="settingsOpenTerms">Termos de Uso</button>
+            </div>
+
+            <div class="backup-section">
+              <h3 id="backupTitle">Backup dos dados</h3>
+              <p id="backupText">Exporte suas receitas e lista de compras em um arquivo, ou importe um backup salvo anteriormente.</p>
+              <div class="backup-buttons">
+                <button class="secondary-button" type="button" id="exportDataBtn">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  <span id="exportDataLabel">Exportar receitas</span>
+                </button>
+                <label class="secondary-button import-label">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span id="importDataLabel">Importar backup</span>
+                  <input id="importDataInput" type="file" accept="application/json" />
+                </label>
+              </div>
+              <p class="auth-error" id="importError" hidden></p>
+              <p class="auth-success" id="importSuccess" hidden></p>
+            </div>
+
+            <div class="danger-zone">
+              <h3 id="dangerZoneTitle">Excluir conta</h3>
+              <p id="dangerZoneText">Essa ação é permanente. Todos os seus dados de perfil serão removidos e você perderá acesso à sua conta.</p>
+              <button class="danger-button" type="button" id="deleteAccountBtn">Excluir minha conta</button>
+            </div>
+
+            <form id="deleteAccountForm" class="settings-form" hidden>
+              <label>
+                <span id="deleteConfirmPasswordLabel">Confirme sua senha para excluir a conta</span>
+                <input id="deleteConfirmPassword" type="password" required autocomplete="current-password" placeholder="••••••••" />
+              </label>
+              <p class="auth-error" id="deleteAccountError" hidden></p>
+              <div class="form-actions">
+                <button class="secondary-button" type="button" id="cancelDeleteBtn">Cancelar</button>
+                <button class="danger-button" type="submit" id="confirmDeleteBtn">Confirmar exclusão</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <script type="module" src="firebase-init.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

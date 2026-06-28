@@ -1,3 +1,309 @@
+// ── TIMER STATE (declarado no topo para evitar erro de hoisting) ──
+let timerTotalSeconds = 10 * 60;
+let timerRemainingSeconds = timerTotalSeconds;
+let timerIntervalId = null;
+let timerIsRunning = false;
+let timerAlarmActive = false;
+let audioCtx = null;
+
+// ── TOAST NOTIFICATIONS ──────────────────────────
+function showToast(message, type = "success") {
+  const container = document.querySelector("#toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type === "error" ? "toast-error" : ""}`.trim();
+  const icon = type === "error"
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+    : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+  toast.innerHTML = `${icon}<span>${message}</span>`;
+  container.append(toast);
+  setTimeout(() => toast.remove(), 2600);
+}
+
+// ── AUTHENTICATION ───────────────────────────────
+const authScreen = document.querySelector("#authScreen");
+const appShell = document.querySelector("#appShell");
+const authForm = document.querySelector("#authForm");
+const authNameField = document.querySelector("#authNameField");
+const authName = document.querySelector("#authName");
+const authEmail = document.querySelector("#authEmail");
+const authPassword = document.querySelector("#authPassword");
+const authError = document.querySelector("#authError");
+const authSubmitBtn = document.querySelector("#authSubmitBtn");
+const authTabLogin = document.querySelector("#authTabLogin");
+const authTabSignup = document.querySelector("#authTabSignup");
+const googleSignInBtn = document.querySelector("#googleSignInBtn");
+const logoutBtn = document.querySelector("#logoutBtn");
+const userEmailEl = document.querySelector("#userEmail");
+const userAvatarEl = document.querySelector("#userAvatar");
+const passwordStrength = document.querySelector("#passwordStrength");
+const authTermsField = document.querySelector("#authTermsField");
+const authTermsCheckbox = document.querySelector("#authTermsCheckbox");
+const termsOverlay = document.querySelector("#termsOverlay");
+const privacyOverlay = document.querySelector("#privacyOverlay");
+const closeTermsModalBtn = document.querySelector("#closeTermsModal");
+const closePrivacyModalBtn = document.querySelector("#closePrivacyModal");
+
+let authMode = "login"; // "login" | "signup"
+
+const authTexts = {
+  pt: {
+    loginTitle: "Entre para acessar seu caderno de receitas",
+    signupTitle: "Crie sua conta gratuita",
+    loginTab: "Entrar",
+    signupTab: "Criar conta",
+    nameLabel: "Nome",
+    emailLabel: "E-mail",
+    passwordLabel: "Senha",
+    loginSubmit: "Entrar",
+    signupSubmit: "Criar conta",
+    divider: "ou",
+    google: "Continuar com Google",
+    rules: { length: "Pelo menos 8 caracteres", upper: "Uma letra maiúscula", number: "Um número", symbol: "Um símbolo (!@#$...)" },
+    errors: {
+      "auth/invalid-email": "E-mail inválido.",
+      "auth/user-not-found": "Usuário não encontrado.",
+      "auth/wrong-password": "Senha incorreta.",
+      "auth/invalid-credential": "E-mail ou senha incorretos.",
+      "auth/email-already-in-use": "Esse e-mail já está em uso.",
+      "auth/weak-password": "A senha precisa ter ao menos 6 caracteres.",
+      "weak-password-custom": "Sua senha precisa atender a todos os requisitos de segurança.",
+      "terms-required": "Você precisa aceitar os Termos de Uso e a Política de Privacidade.",
+      default: "Ocorreu um erro. Tente novamente.",
+    },
+  },
+  en: {
+    loginTitle: "Sign in to access your recipe notebook",
+    signupTitle: "Create your free account",
+    loginTab: "Sign in",
+    signupTab: "Sign up",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    loginSubmit: "Sign in",
+    signupSubmit: "Sign up",
+    divider: "or",
+    google: "Continue with Google",
+    rules: { length: "At least 8 characters", upper: "One uppercase letter", number: "One number", symbol: "One symbol (!@#$...)" },
+    errors: {
+      "auth/invalid-email": "Invalid email.",
+      "auth/user-not-found": "User not found.",
+      "auth/wrong-password": "Wrong password.",
+      "auth/invalid-credential": "Incorrect email or password.",
+      "auth/email-already-in-use": "This email is already in use.",
+      "auth/weak-password": "Password must be at least 6 characters.",
+      "weak-password-custom": "Your password needs to meet all security requirements.",
+      "terms-required": "You need to accept the Terms of Use and Privacy Policy.",
+      default: "Something went wrong. Please try again.",
+    },
+  },
+};
+
+function applyAuthTranslations() {
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const tx = authTexts[langKey];
+  document.querySelector("#authSubtitle").textContent = authMode === "login" ? tx.loginTitle : tx.signupTitle;
+  authTabLogin.textContent = tx.loginTab;
+  authTabSignup.textContent = tx.signupTab;
+  document.querySelector("#authNameLabel").textContent = tx.nameLabel;
+  document.querySelector("#authEmailLabel").textContent = tx.emailLabel;
+  document.querySelector("#authPasswordLabel").textContent = tx.passwordLabel;
+  authSubmitBtn.textContent = authMode === "login" ? tx.loginSubmit : tx.signupSubmit;
+  document.querySelector("#authDividerText").textContent = tx.divider;
+  document.querySelector("#googleSignInText").textContent = tx.google;
+
+  document.querySelectorAll("#strengthRules li, #newStrengthRules li").forEach((li) => {
+    const rule = li.dataset.rule;
+    li.textContent = tx.rules[rule];
+  });
+
+  const termsLabel = document.querySelector("#authTermsLabel");
+  if (termsLabel) {
+    termsLabel.innerHTML = langKey === "pt"
+      ? `Li e aceito os <a href="#" id="openTermsLink">Termos de Uso</a> e a <a href="#" id="openPrivacyLink">Política de Privacidade</a>`
+      : `I have read and accept the <a href="#" id="openTermsLink">Terms of Use</a> and the <a href="#" id="openPrivacyLink">Privacy Policy</a>`;
+  }
+
+  document.querySelector("#termsTitle").textContent = langKey === "pt" ? "Termos de Uso" : "Terms of Use";
+  document.querySelector("#privacyTitle").textContent = langKey === "pt" ? "Política de Privacidade" : "Privacy Policy";
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  authTabLogin.classList.toggle("active", mode === "login");
+  authTabSignup.classList.toggle("active", mode === "signup");
+  authPassword.autocomplete = mode === "login" ? "current-password" : "new-password";
+  authNameField.hidden = mode !== "signup";
+  authName.required = mode === "signup";
+  passwordStrength.hidden = mode !== "signup";
+  authTermsField.hidden = mode !== "signup";
+  authTermsCheckbox.required = mode === "signup";
+  authError.hidden = true;
+  applyAuthTranslations();
+}
+
+function checkPasswordStrength(password) {
+  const rules = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    symbol: /[^A-Za-z0-9]/.test(password),
+  };
+  const metCount = Object.values(rules).filter(Boolean).length;
+  return { rules, metCount };
+}
+
+function updatePasswordStrengthUI(password, rulesListEl, barsContainerEl) {
+  const { rules, metCount } = checkPasswordStrength(password);
+  rulesListEl.querySelectorAll("li").forEach((li) => {
+    const rule = li.dataset.rule;
+    li.classList.toggle("met", rules[rule]);
+  });
+  const bars = barsContainerEl.querySelectorAll(".strength-bar");
+  let strengthClass = "";
+  if (metCount <= 1) strengthClass = "active-weak";
+  else if (metCount <= 3) strengthClass = "active-medium";
+  else strengthClass = "active-strong";
+
+  bars.forEach((bar, index) => {
+    bar.classList.remove("active-weak", "active-medium", "active-strong");
+    if (index < metCount) bar.classList.add(strengthClass);
+  });
+  return metCount === 4;
+}
+
+authPassword.addEventListener("input", () => {
+  if (authMode === "signup") {
+    updatePasswordStrengthUI(authPassword.value, document.querySelector("#strengthRules"), document.querySelector("#passwordStrength"));
+  }
+});
+
+// Delegação de eventos: funciona mesmo quando innerHTML recria os links
+authTermsField.addEventListener("click", (event) => {
+  const link = event.target.closest("a");
+  if (!link) return;
+  event.preventDefault();
+  if (link.id === "openTermsLink") termsOverlay.hidden = false;
+  if (link.id === "openPrivacyLink") privacyOverlay.hidden = false;
+});
+
+closeTermsModalBtn.addEventListener("click", () => { termsOverlay.hidden = true; });
+closePrivacyModalBtn.addEventListener("click", () => { privacyOverlay.hidden = true; });
+
+[termsOverlay, privacyOverlay].forEach((overlay) => {
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) overlay.hidden = true;
+  });
+});
+
+function showAuthError(code) {
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const tx = authTexts[langKey];
+  authError.textContent = tx.errors[code] || tx.errors.default;
+  authError.hidden = false;
+}
+
+function showApp(user) {
+  hideSplashWithMinimumDelay();
+  authScreen.hidden = true;
+  appShell.hidden = false;
+  userEmailEl.textContent = user.email || "";
+  const initialSource = user.displayName || user.email || "U";
+  userAvatarEl.textContent = initialSource.charAt(0).toUpperCase();
+
+  if (currentUserId !== user.uid) {
+    currentUserId = user.uid;
+    dataLoaded = false;
+    loadUserDataFromFirestore(user.uid);
+  }
+}
+
+function showAuthScreen() {
+  hideSplashWithMinimumDelay();
+  appShell.hidden = true;
+  authScreen.hidden = false;
+  currentUserId = null;
+  dataLoaded = false;
+  recipes = [];
+  shoppingItems = [];
+}
+
+const splashStartTime = Date.now();
+const SPLASH_MIN_DISPLAY_MS = 2600;
+
+function hideSplashWithMinimumDelay() {
+  const splashScreen = document.querySelector("#splashScreen");
+  if (!splashScreen || splashScreen.classList.contains("hidden")) return;
+  const elapsed = Date.now() - splashStartTime;
+  const remaining = Math.max(0, SPLASH_MIN_DISPLAY_MS - elapsed);
+  setTimeout(() => splashScreen.classList.add("hidden"), remaining);
+}
+
+authTabLogin.addEventListener("click", () => setAuthMode("login"));
+authTabSignup.addEventListener("click", () => setAuthMode("signup"));
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  authError.hidden = true;
+
+  if (authMode === "signup") {
+    const { metCount } = checkPasswordStrength(authPassword.value);
+    if (metCount < 4) {
+      showAuthError("weak-password-custom");
+      return;
+    }
+    if (!authTermsCheckbox.checked) {
+      showAuthError("terms-required");
+      return;
+    }
+  }
+
+  authSubmitBtn.disabled = true;
+  try {
+    if (authMode === "login") {
+      await window.firebaseAuth.signIn(authEmail.value.trim(), authPassword.value);
+    } else {
+      const credential = await window.firebaseAuth.signUp(authEmail.value.trim(), authPassword.value);
+      await window.firebaseAuth.updateDisplayName(authName.value.trim());
+    }
+  } catch (error) {
+    showAuthError(error.code);
+  } finally {
+    authSubmitBtn.disabled = false;
+  }
+});
+
+googleSignInBtn.addEventListener("click", async () => {
+  authError.hidden = true;
+  try {
+    await window.firebaseAuth.signInWithGoogle();
+  } catch (error) {
+    showAuthError(error.code);
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await window.firebaseAuth.signOut();
+});
+
+function initAuthListener() {
+  window.firebaseAuth.onAuthStateChanged((user) => {
+    if (user) {
+      showApp(user);
+    } else {
+      showAuthScreen();
+    }
+  });
+}
+
+if (window.firebaseAuth) {
+  initAuthListener();
+} else {
+  window.addEventListener("firebase-ready", initAuthListener, { once: true });
+}
+
+applyAuthTranslations();
+
 const translations = {
   pt: {
     brandNote: "Um caderno de receitas moderno para planejar, favoritar e comprar melhor.",
@@ -13,11 +319,11 @@ const translations = {
     typeFilterLabel: "Tipo",
     categoryFilters: {
       all: "Todas", breakfast: "Café da manhã", lunch: "Almoço",
-      dinner: "Jantar", dessert: "Sobremesas", snack: "Snacks",
+      dinner: "Jantar", dessert: "Sobremesas", snack: "Lanches",
     },
     typeFilters: {
       all: "Todos", seafood: "Frutos do mar", meat: "Carne",
-      chicken: "Frango", pasta: "Pasta", soup: "Sopa", other: "Outro",
+      chicken: "Frango", pasta: "Massa", soup: "Sopa", other: "Outro",
     },
     formLabels: {
       photo: "Foto da receita", addPhoto: "Adicionar foto", removePhoto: "Remover foto",
@@ -27,11 +333,11 @@ const translations = {
     },
     categories: {
       breakfast: "Café da manhã", lunch: "Almoço", dinner: "Jantar",
-      dessert: "Sobremesas", snack: "Snacks",
+      dessert: "Sobremesas", snack: "Lanches",
     },
     types: {
       seafood: "Frutos do mar", meat: "Carne", chicken: "Frango",
-      pasta: "Pasta", soup: "Sopa", other: "Outro",
+      pasta: "Massa", soup: "Sopa", other: "Outro",
     },
     difficulties: { Easy: "Fácil", Medium: "Médio", Hard: "Difícil" },
     sectionKicker: "Caderno",
@@ -97,7 +403,6 @@ const translations = {
   },
 };
 
-const storageKeys = { recipes: "mealPlanner.recipes", shopping: "mealPlanner.shopping" };
 const categories = ["breakfast", "lunch", "dinner", "dessert", "snack"];
 const recipeTypes = ["seafood", "meat", "chicken", "pasta", "soup", "other"];
 
@@ -156,12 +461,11 @@ const seedRecipes = [
   },
 ];
 
-let recipes = load(storageKeys.recipes, seedRecipes).map(normalizeRecipe);
-let shoppingItems = load(storageKeys.shopping, []).map((item) => ({
-  id: item.id || createId(),
-  name: item.name || String(item),
-  done: Boolean(item.done),
-}));
+let recipes = [];
+let shoppingItems = [];
+let currentUserId = null;
+let dataLoaded = false;
+let saveDebounceTimer = null;
 
 // DOM refs
 const recipeForm = document.querySelector("#recipeForm");
@@ -194,14 +498,41 @@ const openModalBtn = document.querySelector("#openModal");
 const closeModalBtn = document.querySelector("#closeModal");
 const modalTitle = document.querySelector("#modalTitle");
 
-function load(key, fallback) {
-  const saved = localStorage.getItem(key);
-  return saved ? JSON.parse(saved) : fallback;
+async function loadUserDataFromFirestore(uid) {
+  try {
+    const data = await window.firebaseData.loadUserData(uid);
+    if (data) {
+      recipes = (data.recipes || []).map(normalizeRecipe);
+      shoppingItems = (data.shoppingItems || []).map((item) => ({
+        id: item.id || createId(),
+        name: item.name || String(item),
+        done: Boolean(item.done),
+      }));
+    } else {
+      recipes = seedRecipes.map(normalizeRecipe);
+      shoppingItems = [];
+    }
+  } catch (error) {
+    console.error("Erro ao carregar dados do Firestore:", error);
+    recipes = [];
+    shoppingItems = [];
+  }
+  dataLoaded = true;
+  render();
 }
 
 function save() {
-  localStorage.setItem(storageKeys.recipes, JSON.stringify(recipes));
-  localStorage.setItem(storageKeys.shopping, JSON.stringify(shoppingItems));
+  if (!currentUserId || !dataLoaded) return;
+  clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(async () => {
+    try {
+      await window.firebaseData.saveUserData(currentUserId, { recipes, shoppingItems });
+    } catch (error) {
+      console.error("Erro ao salvar dados no Firestore:", error);
+      const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+      showToast(langKey === "pt" ? "Erro ao salvar. Verifique sua conexão." : "Error saving. Check your connection.", "error");
+    }
+  }, 500);
 }
 
 function normalize(value) { return value.trim().toLowerCase(); }
@@ -277,9 +608,23 @@ function renderViews() {
 
 function renderRecipes() {
   const tx = t();
+  const loadingState = document.querySelector("#loadingState");
+  if (!dataLoaded) {
+    recipeGrid.replaceChildren();
+    emptyState.style.display = "none";
+    if (loadingState) loadingState.hidden = false;
+    resultCount.textContent = "";
+    return;
+  }
+  if (loadingState) loadingState.hidden = true;
   const visibleRecipes = getVisibleRecipes();
   recipeGrid.replaceChildren();
-  emptyState.style.display = visibleRecipes.length ? "none" : "block";
+  emptyState.style.display = visibleRecipes.length ? "none" : "flex";
+  document.querySelector("#emptyStateText").textContent = tx.emptyState;
+  const loadingStateText = document.querySelector("#loadingStateText");
+  if (loadingStateText) {
+    loadingStateText.textContent = lang === "pt" ? "Carregando suas receitas..." : "Loading your recipes...";
+  }
   resultCount.textContent = tx.resultCount(visibleRecipes.length);
 
   visibleRecipes.forEach((recipe) => {
@@ -366,13 +711,17 @@ function renderStats() {
 
 function addIngredients(ingredients) {
   const existing = new Set(shoppingItems.map((item) => normalize(item.name)));
+  let addedCount = 0;
   ingredients.forEach((ingredient) => {
     if (!existing.has(normalize(ingredient))) {
       existing.add(normalize(ingredient));
       shoppingItems.push({ id: createId(), name: ingredient, done: false });
+      addedCount += 1;
     }
   });
   render();
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  showToast(langKey === "pt" ? "Ingredientes adicionados à lista!" : "Ingredients added to list!");
 }
 
 function addShoppingItem(name) {
@@ -416,9 +765,11 @@ function editRecipe(id) {
 }
 
 function deleteRecipe(id) {
-  if (!confirm(lang === "pt" ? "Excluir esta receita?" : "Delete this recipe?")) return;
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  if (!confirm(langKey === "pt" ? "Excluir esta receita?" : "Delete this recipe?")) return;
   recipes = recipes.filter((recipe) => recipe.id !== id);
   render();
+  showToast(langKey === "pt" ? "Receita excluída." : "Recipe deleted.");
 }
 
 function toggleFavorite(id) {
@@ -441,6 +792,69 @@ function applyTranslations() {
   document.querySelector("#recipesView h2").textContent = tx.sectionTitle;
   document.querySelector("#shoppingView .section-kicker").textContent = tx.shoppingKicker;
   document.querySelector("#shoppingView h2").textContent = tx.shoppingTitle;
+
+  const settingsI18n = {
+    pt: {
+      settingsTitle: "Configurações da conta",
+      tabProfile: "Perfil", tabPassword: "Senha", tabPrivacy: "Privacidade",
+      profileNameLabel: "Nome", profileBirthdayLabel: "Data de nascimento",
+      profileSaveBtn: "Salvar alterações",
+      currentPasswordLabel: "Senha atual", newPasswordLabel: "Nova senha",
+      passwordSaveBtn: "Alterar senha",
+      privacyIntro: "Você pode revisar nossa Política de Privacidade e Termos de Uso a qualquer momento.",
+      openPrivacy: "Política de Privacidade", openTerms: "Termos de Uso",
+      dangerZoneTitle: "Excluir conta",
+      dangerZoneText: "Essa ação é permanente. Todos os seus dados de perfil serão removidos e você perderá acesso à sua conta.",
+      deleteAccountBtn: "Excluir minha conta",
+      deleteConfirmLabel: "Confirme sua senha para excluir a conta",
+      cancelDelete: "Cancelar", confirmDelete: "Confirmar exclusão",
+    },
+    en: {
+      settingsTitle: "Account settings",
+      tabProfile: "Profile", tabPassword: "Password", tabPrivacy: "Privacy",
+      profileNameLabel: "Name", profileBirthdayLabel: "Date of birth",
+      profileSaveBtn: "Save changes",
+      currentPasswordLabel: "Current password", newPasswordLabel: "New password",
+      passwordSaveBtn: "Change password",
+      privacyIntro: "You can review our Privacy Policy and Terms of Use at any time.",
+      openPrivacy: "Privacy Policy", openTerms: "Terms of Use",
+      dangerZoneTitle: "Delete account",
+      dangerZoneText: "This action is permanent. All your profile data will be removed and you will lose access to your account.",
+      deleteAccountBtn: "Delete my account",
+      deleteConfirmLabel: "Confirm your password to delete the account",
+      cancelDelete: "Cancel", confirmDelete: "Confirm deletion",
+    },
+  };
+  const sx = settingsI18n[lang];
+  document.querySelector("#settingsTitle").textContent = sx.settingsTitle;
+  document.querySelector("#settingsTabProfile").textContent = sx.tabProfile;
+  document.querySelector("#settingsTabPassword").textContent = sx.tabPassword;
+  document.querySelector("#settingsTabPrivacy").textContent = sx.tabPrivacy;
+  document.querySelector("#profileNameLabel").textContent = sx.profileNameLabel;
+  document.querySelector("#profileBirthdayLabel").textContent = sx.profileBirthdayLabel;
+  document.querySelector("#profileSaveBtn").textContent = sx.profileSaveBtn;
+  document.querySelector("#currentPasswordLabel").textContent = sx.currentPasswordLabel;
+  document.querySelector("#newPasswordLabel").textContent = sx.newPasswordLabel;
+  document.querySelector("#passwordSaveBtn").textContent = sx.passwordSaveBtn;
+  document.querySelector("#privacyIntro").textContent = sx.privacyIntro;
+  document.querySelector("#settingsOpenPrivacy").textContent = sx.openPrivacy;
+  document.querySelector("#settingsOpenTerms").textContent = sx.openTerms;
+  document.querySelector("#dangerZoneTitle").textContent = sx.dangerZoneTitle;
+  document.querySelector("#dangerZoneText").textContent = sx.dangerZoneText;
+  document.querySelector("#deleteAccountBtn").textContent = sx.deleteAccountBtn;
+  document.querySelector("#deleteConfirmPasswordLabel").textContent = sx.deleteConfirmLabel;
+  document.querySelector("#cancelDeleteBtn").textContent = sx.cancelDelete;
+  document.querySelector("#confirmDeleteBtn").textContent = sx.confirmDelete;
+
+  const backupI18n = {
+    pt: { title: "Backup dos dados", text: "Exporte suas receitas e lista de compras em um arquivo, ou importe um backup salvo anteriormente.", exportLabel: "Exportar receitas", importLabel: "Importar backup" },
+    en: { title: "Data backup", text: "Export your recipes and shopping list to a file, or import a previously saved backup.", exportLabel: "Export recipes", importLabel: "Import backup" },
+  };
+  const bx = backupI18n[lang];
+  document.querySelector("#backupTitle").textContent = bx.title;
+  document.querySelector("#backupText").textContent = bx.text;
+  document.querySelector("#exportDataLabel").textContent = bx.exportLabel;
+  document.querySelector("#importDataLabel").textContent = bx.importLabel;
   document.querySelector("#shoppingDashboardForm .primary-button").textContent = tx.addButton;
 
   // Lang toggle visual
@@ -486,6 +900,22 @@ function applyTranslations() {
   });
 
   if (!recipePhotoData.value) setPhotoPreview("");
+
+  const timerMinutesLabel = document.querySelector("#timerMinutesLabel");
+  if (timerMinutesLabel) timerMinutesLabel.textContent = lang === "pt" ? "Minutos" : "Minutes";
+  const timerModalTitle = document.querySelector("#timerModalTitle");
+  if (timerModalTitle) timerModalTitle.textContent = lang === "pt" ? "Timer de preparo" : "Cooking timer";
+  const timerSetBtnEl = document.querySelector("#timerSetBtn");
+  if (timerSetBtnEl) timerSetBtnEl.textContent = lang === "pt" ? "Definir" : "Set";
+  const timerStartBtnEl = document.querySelector("#timerStartBtn");
+  if (timerStartBtnEl && !timerIsRunning) {
+    timerStartBtnEl.textContent = lang === "pt" ? "Iniciar" : "Start";
+  }
+  const timerPauseBtnEl = document.querySelector("#timerPauseBtn");
+  if (timerPauseBtnEl) timerPauseBtnEl.textContent = lang === "pt" ? "Pausar" : "Pause";
+  const timerResetBtnEl = document.querySelector("#timerResetBtn");
+  if (timerResetBtnEl) timerResetBtnEl.textContent = lang === "pt" ? "Resetar" : "Reset";
+
   render();
 }
 
@@ -497,6 +927,7 @@ recipeForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const ingredients = recipeIngredients.value.split("\n").map((i) => i.trim()).filter(Boolean);
   const existing = recipes.find((r) => r.id === recipeId.value);
+  const wasEditing = Boolean(recipeId.value);
   const category = recipeCategory.value;
   const data = {
     id: recipeId.value || createId(),
@@ -517,6 +948,12 @@ recipeForm.addEventListener("submit", (event) => {
 
   closeModal();
   render();
+
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const message = wasEditing
+    ? (langKey === "pt" ? "Receita atualizada!" : "Recipe updated!")
+    : (langKey === "pt" ? "Receita salva!" : "Recipe saved!");
+  showToast(message);
 });
 
 recipeForm.addEventListener("reset", () => {
@@ -565,6 +1002,441 @@ document.querySelector("#langToggle").addEventListener("click", () => {
   lang = lang === "pt" ? "en" : "pt";
   localStorage.setItem("mealPlanner.lang", lang);
   applyTranslations();
+  applyAuthTranslations();
 });
 
 applyTranslations();
+
+// ── TIMER ────────────────────────────────────────
+const timerFab = document.querySelector("#timerFab");
+const timerOverlay = document.querySelector("#timerOverlay");
+const timerModal = document.querySelector("#timerModal");
+const closeTimerModalBtn = document.querySelector("#closeTimerModal");
+const timerDisplay = document.querySelector("#timerDisplay");
+const timerMinutesInput = document.querySelector("#timerMinutesInput");
+const timerSetBtn = document.querySelector("#timerSetBtn");
+const timerStartBtn = document.querySelector("#timerStartBtn");
+const timerPauseBtn = document.querySelector("#timerPauseBtn");
+const timerResetBtn = document.querySelector("#timerResetBtn");
+const timerStatus = document.querySelector("#timerStatus");
+const timerPresetButtons = document.querySelectorAll(".chip-preset");
+
+// (variáveis do timer movidas para o topo do arquivo)
+
+const timerTexts = {
+  pt: { ready: "Pronto para começar", running: "Em andamento...", paused: "Pausado", done: "Tempo esgotado!" },
+  en: { ready: "Ready to start", running: "Running...", paused: "Paused", done: "Time's up!" },
+};
+
+function formatTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+function updateTimerDisplay() {
+  timerDisplay.textContent = formatTime(timerRemainingSeconds);
+}
+
+function setTimerStatus(key) {
+  timerStatus.textContent = timerTexts[lang][key];
+  timerStatus.classList.toggle("alarm-active", key === "done");
+}
+
+function playAlarmSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    [0, 0.35, 0.7].forEach((offset) => {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, now + offset);
+      gainNode.gain.setValueAtTime(0.0001, now + offset);
+      gainNode.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.3);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.start(now + offset);
+      oscillator.stop(now + offset + 0.32);
+    });
+  } catch (error) {
+    console.warn("Não foi possível tocar o alarme:", error);
+  }
+}
+
+function triggerAlarm() {
+  timerAlarmActive = true;
+  timerIsRunning = false;
+  clearInterval(timerIntervalId);
+  timerFab.classList.remove("running");
+  timerFab.classList.add("alarm");
+  timerModal.classList.add("alarm-active");
+  timerDisplay.classList.add("alarm-active");
+  setTimerStatus("done");
+  playAlarmSound();
+  const alarmInterval = setInterval(playAlarmSound, 1200);
+  timerModal.dataset.alarmInterval = alarmInterval;
+
+  timerStartBtn.disabled = true;
+  timerPauseBtn.disabled = true;
+}
+
+function stopAlarm() {
+  timerAlarmActive = false;
+  timerFab.classList.remove("alarm");
+  timerModal.classList.remove("alarm-active");
+  timerDisplay.classList.remove("alarm-active");
+  const alarmInterval = timerModal.dataset.alarmInterval;
+  if (alarmInterval) clearInterval(Number(alarmInterval));
+}
+
+function startTimer() {
+  if (timerIsRunning || timerAlarmActive) return;
+  if (timerRemainingSeconds <= 0) return;
+  timerIsRunning = true;
+  timerFab.classList.add("running");
+  setTimerStatus("running");
+  timerStartBtn.disabled = true;
+  timerPauseBtn.disabled = false;
+
+  timerIntervalId = setInterval(() => {
+    timerRemainingSeconds -= 1;
+    updateTimerDisplay();
+    if (timerRemainingSeconds <= 0) {
+      triggerAlarm();
+    }
+  }, 1000);
+}
+
+function pauseTimer() {
+  if (!timerIsRunning) return;
+  timerIsRunning = false;
+  clearInterval(timerIntervalId);
+  timerFab.classList.remove("running");
+  setTimerStatus("paused");
+  timerStartBtn.disabled = false;
+  timerPauseBtn.disabled = true;
+}
+
+function resetTimer() {
+  timerIsRunning = false;
+  clearInterval(timerIntervalId);
+  stopAlarm();
+  timerRemainingSeconds = timerTotalSeconds;
+  updateTimerDisplay();
+  setTimerStatus("ready");
+  timerFab.classList.remove("running");
+  timerStartBtn.disabled = false;
+  timerPauseBtn.disabled = true;
+}
+
+function setTimerMinutes(minutes) {
+  const safeMinutes = Math.max(0, Math.min(180, Number(minutes) || 0));
+  timerMinutesInput.value = safeMinutes;
+  timerTotalSeconds = safeMinutes * 60;
+  resetTimer();
+}
+
+function openTimerModal() {
+  timerOverlay.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeTimerModal() {
+  timerOverlay.hidden = true;
+  document.body.style.overflow = "";
+}
+
+timerFab.addEventListener("click", openTimerModal);
+closeTimerModalBtn.addEventListener("click", closeTimerModal);
+
+timerOverlay.addEventListener("click", (event) => {
+  if (event.target === timerOverlay) closeTimerModal();
+});
+
+timerSetBtn.addEventListener("click", () => setTimerMinutes(timerMinutesInput.value));
+
+timerPresetButtons.forEach((button) => {
+  button.addEventListener("click", () => setTimerMinutes(button.dataset.minutes));
+});
+
+timerStartBtn.addEventListener("click", () => {
+  if (timerAlarmActive) {
+    stopAlarm();
+    resetTimer();
+    return;
+  }
+  startTimer();
+});
+
+timerPauseBtn.addEventListener("click", pauseTimer);
+timerResetBtn.addEventListener("click", resetTimer);
+
+setTimerStatus("ready");
+updateTimerDisplay();
+
+// ── SPLASH SCREEN ────────────────────────────────
+// O splash agora é escondido pelo showApp()/showAuthScreen() quando o
+// Firebase confirma o estado de autenticação (login ou deslogado).
+// Mantemos um fallback de segurança caso o Firebase demore demais.
+window.addEventListener("DOMContentLoaded", () => {
+  const splashScreen = document.querySelector("#splashScreen");
+  if (!splashScreen) return;
+  setTimeout(() => {
+    splashScreen.classList.add("hidden");
+  }, 4000);
+});
+
+// ── ACCOUNT SETTINGS ─────────────────────────────
+const openSettingsBtn = document.querySelector("#openSettingsBtn");
+const settingsOverlay = document.querySelector("#settingsOverlay");
+const closeSettingsModalBtn = document.querySelector("#closeSettingsModal");
+const settingsTabProfile = document.querySelector("#settingsTabProfile");
+const settingsTabPassword = document.querySelector("#settingsTabPassword");
+const profileForm = document.querySelector("#profileForm");
+const passwordForm = document.querySelector("#passwordForm");
+const profileName = document.querySelector("#profileName");
+const profileBirthday = document.querySelector("#profileBirthday");
+const profileEmailDisplay = document.querySelector("#profileEmailDisplay");
+const profileError = document.querySelector("#profileError");
+const profileSuccess = document.querySelector("#profileSuccess");
+const currentPasswordInput = document.querySelector("#currentPassword");
+const newPasswordInput = document.querySelector("#newPassword");
+const passwordError = document.querySelector("#passwordError");
+const passwordSuccess = document.querySelector("#passwordSuccess");
+
+const settingsStorageKey = (uid) => `mealPlanner.profile.${uid}`;
+
+function openSettingsModal() {
+  const user = window.firebaseAuth.auth.currentUser;
+  if (!user) return;
+  profileName.value = user.displayName || "";
+  profileEmailDisplay.textContent = user.email || "";
+  const savedProfile = JSON.parse(localStorage.getItem(settingsStorageKey(user.uid)) || "{}");
+  profileBirthday.value = savedProfile.birthday || "";
+  profileError.hidden = true;
+  profileSuccess.hidden = true;
+  passwordError.hidden = true;
+  passwordSuccess.hidden = true;
+  passwordForm.reset();
+  document.querySelector("#deleteAccountForm").hidden = true;
+  document.querySelector("#deleteAccountBtn").hidden = false;
+  document.querySelector("#deleteAccountError").hidden = true;
+  document.querySelector("#deleteAccountForm").reset();
+  settingsOverlay.hidden = false;
+}
+
+function closeSettingsModal() {
+  settingsOverlay.hidden = true;
+}
+
+openSettingsBtn.addEventListener("click", openSettingsModal);
+closeSettingsModalBtn.addEventListener("click", closeSettingsModal);
+settingsOverlay.addEventListener("click", (event) => {
+  if (event.target === settingsOverlay) closeSettingsModal();
+});
+
+document.querySelectorAll(".settings-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".settings-tab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    const target = tab.dataset.settingsTab;
+    document.querySelectorAll(".settings-form").forEach((form) => {
+      form.hidden = form.dataset.settingsPanel !== target;
+    });
+  });
+});
+
+profileForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  profileError.hidden = true;
+  profileSuccess.hidden = true;
+  const user = window.firebaseAuth.auth.currentUser;
+  if (!user) return;
+
+  try {
+    await window.firebaseAuth.updateDisplayName(profileName.value.trim());
+    localStorage.setItem(settingsStorageKey(user.uid), JSON.stringify({ birthday: profileBirthday.value }));
+    userEmailEl.textContent = user.email || "";
+    userAvatarEl.textContent = (profileName.value || user.email || "U").charAt(0).toUpperCase();
+    const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+    profileSuccess.textContent = langKey === "pt" ? "Perfil atualizado com sucesso!" : "Profile updated successfully!";
+    profileSuccess.hidden = false;
+  } catch (error) {
+    const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+    profileError.textContent = langKey === "pt" ? "Não foi possível salvar. Tente novamente." : "Could not save. Please try again.";
+    profileError.hidden = false;
+  }
+});
+
+newPasswordInput.addEventListener("input", () => {
+  updatePasswordStrengthUI(newPasswordInput.value, document.querySelector("#newStrengthRules"), document.querySelector("#newPasswordStrength"));
+});
+
+passwordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  passwordError.hidden = true;
+  passwordSuccess.hidden = true;
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+
+  const { metCount } = checkPasswordStrength(newPasswordInput.value);
+  if (metCount < 4) {
+    passwordError.textContent = langKey === "pt"
+      ? "A nova senha precisa atender a todos os requisitos de segurança."
+      : "The new password needs to meet all security requirements.";
+    passwordError.hidden = false;
+    return;
+  }
+
+  try {
+    await window.firebaseAuth.reauthenticate(currentPasswordInput.value);
+    await window.firebaseAuth.updateUserPassword(newPasswordInput.value);
+    passwordSuccess.textContent = langKey === "pt" ? "Senha alterada com sucesso!" : "Password changed successfully!";
+    passwordSuccess.hidden = false;
+    passwordForm.reset();
+  } catch (error) {
+    passwordError.textContent = langKey === "pt" ? "Senha atual incorreta." : "Current password is incorrect.";
+    passwordError.hidden = false;
+  }
+});
+
+// ── PRIVACY TAB / ACCOUNT DELETION ───────────────
+const settingsOpenPrivacyBtn = document.querySelector("#settingsOpenPrivacy");
+const settingsOpenTermsBtn = document.querySelector("#settingsOpenTerms");
+const deleteAccountBtn = document.querySelector("#deleteAccountBtn");
+const deleteAccountForm = document.querySelector("#deleteAccountForm");
+const cancelDeleteBtn = document.querySelector("#cancelDeleteBtn");
+const deleteConfirmPassword = document.querySelector("#deleteConfirmPassword");
+const deleteAccountError = document.querySelector("#deleteAccountError");
+
+settingsOpenPrivacyBtn.addEventListener("click", () => {
+  privacyOverlay.hidden = false;
+});
+
+settingsOpenTermsBtn.addEventListener("click", () => {
+  termsOverlay.hidden = false;
+});
+
+deleteAccountBtn.addEventListener("click", () => {
+  deleteAccountForm.hidden = false;
+  deleteAccountBtn.hidden = true;
+  deleteConfirmPassword.focus();
+});
+
+cancelDeleteBtn.addEventListener("click", () => {
+  deleteAccountForm.hidden = true;
+  deleteAccountBtn.hidden = false;
+  deleteAccountForm.reset();
+  deleteAccountError.hidden = true;
+});
+
+deleteAccountForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  deleteAccountError.hidden = true;
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const confirmMessage = langKey === "pt"
+    ? "Tem certeza? Essa ação não pode ser desfeita."
+    : "Are you sure? This action cannot be undone.";
+  if (!confirm(confirmMessage)) return;
+
+  try {
+    const user = window.firebaseAuth.auth.currentUser;
+    await window.firebaseAuth.reauthenticate(deleteConfirmPassword.value);
+    if (user) {
+      localStorage.removeItem(settingsStorageKey(user.uid));
+      await window.firebaseData.deleteUserData(user.uid);
+    }
+    await window.firebaseAuth.deleteAccount();
+    closeSettingsModal();
+  } catch (error) {
+    deleteAccountError.textContent = langKey === "pt"
+      ? "Senha incorreta. Não foi possível excluir a conta."
+      : "Incorrect password. Could not delete account.";
+    deleteAccountError.hidden = false;
+  }
+});
+
+// ── MOBILE SIDEBAR TOGGLE ────────────────────────
+const mobileSidebarToggle = document.querySelector("#mobileSidebarToggle");
+const sidebarEl = document.querySelector("#sidebar");
+
+if (mobileSidebarToggle && sidebarEl) {
+  mobileSidebarToggle.addEventListener("click", () => {
+    sidebarEl.classList.toggle("expanded");
+  });
+
+  document.querySelectorAll(".nav-item[data-view], .nav-item[data-category-filter], .type-pill-nav").forEach((el) => {
+    el.addEventListener("click", () => {
+      if (window.innerWidth <= 768) sidebarEl.classList.remove("expanded");
+    });
+  });
+}
+
+// ── EXPORT / IMPORT BACKUP ────────────────────────
+const exportDataBtn = document.querySelector("#exportDataBtn");
+const importDataInput = document.querySelector("#importDataInput");
+const importError = document.querySelector("#importError");
+const importSuccess = document.querySelector("#importSuccess");
+
+exportDataBtn.addEventListener("click", () => {
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    app: "Plately",
+    recipes,
+    shoppingItems,
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  link.download = `plately-backup-${dateStamp}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  showToast(langKey === "pt" ? "Backup exportado!" : "Backup exported!");
+});
+
+importDataInput.addEventListener("change", async () => {
+  const file = importDataInput.files?.[0];
+  if (!file) return;
+  importError.hidden = true;
+  importSuccess.hidden = true;
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed.recipes)) throw new Error("invalid-format");
+
+    const confirmMessage = langKey === "pt"
+      ? "Importar vai substituir suas receitas e lista de compras atuais. Continuar?"
+      : "Importing will replace your current recipes and shopping list. Continue?";
+    if (!confirm(confirmMessage)) {
+      importDataInput.value = "";
+      return;
+    }
+
+    recipes = parsed.recipes.map(normalizeRecipe);
+    shoppingItems = (parsed.shoppingItems || []).map((item) => ({
+      id: item.id || createId(),
+      name: item.name || String(item),
+      done: Boolean(item.done),
+    }));
+    render();
+    importSuccess.textContent = langKey === "pt" ? "Backup importado com sucesso!" : "Backup imported successfully!";
+    importSuccess.hidden = false;
+    showToast(langKey === "pt" ? "Backup importado!" : "Backup imported!");
+  } catch (error) {
+    importError.textContent = langKey === "pt"
+      ? "Arquivo inválido. Verifique se é um backup do Plately."
+      : "Invalid file. Make sure it's a Plately backup.";
+    importError.hidden = false;
+  } finally {
+    importDataInput.value = "";
+  }
+});
