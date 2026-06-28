@@ -2,7 +2,7 @@
 
 > Planeje. Prepare. Aproveite.
 
-🔗 **[Acesse o projeto ao vivo](https://mariwlima.github.io/plately/)**
+🔗 **[Acesse o projeto ao vivo](https://mariwlima.github.io/Plately/)**
 
 ---
 
