@@ -440,27 +440,6 @@ const placeholderPhotos = {
   snack: svgPhoto("Snack", "#eee4bd", "#9f6b28", "🫒"),
 };
 
-const seedRecipes = [
-  {
-    id: createId(), name: "Omelete de ervas", category: "breakfast", type: "other",
-    time: 12, difficulty: "Easy", favorite: true, photo: placeholderPhotos.breakfast,
-    ingredients: ["2 ovos", "1 colher de queijo", "salsinha", "tomate cereja"],
-    steps: "Bata os ovos, misture os temperos e cozinhe em fogo baixo até firmar.",
-  },
-  {
-    id: createId(), name: "Pasta de limão", category: "dinner", type: "pasta",
-    time: 24, difficulty: "Medium", favorite: false, photo: svgPhoto("Pasta", "#f5e6c8", "#b63e2f", "🍋"),
-    ingredients: ["massa", "limão siciliano", "parmesão", "manteiga"],
-    steps: "Cozinhe a massa, emulsione o molho com limão e finalize com parmesão.",
-  },
-  {
-    id: createId(), name: "Sopa rápida de legumes", category: "dinner", type: "soup",
-    time: 28, difficulty: "Easy", favorite: false, photo: placeholderPhotos.dinner,
-    ingredients: ["cenoura", "batata", "abobrinha", "caldo de legumes"],
-    steps: "Corte tudo pequeno, cozinhe no caldo e finalize com azeite.",
-  },
-];
-
 let recipes = [];
 let shoppingItems = [];
 let currentUserId = null;
@@ -509,7 +488,7 @@ async function loadUserDataFromFirestore(uid) {
         done: Boolean(item.done),
       }));
     } else {
-      recipes = seedRecipes.map(normalizeRecipe);
+      recipes = [];
       shoppingItems = [];
     }
   } catch (error) {
