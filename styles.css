@@ -1668,3 +1668,185 @@ label input:focus, label select:focus, label textarea:focus {
   overflow: hidden;
   clip: rect(0,0,0,0);
 }
+
+/* ── SIDEBAR GREETING ─────────────────────────── */
+.sidebar-greeting {
+  font-size: 13px;
+  font-weight: 600;
+  color: #A8D08D;
+  padding: 0 8px 16px;
+  margin: -8px 0 0;
+  border-bottom: 1px solid #2a4e38;
+}
+
+/* ── USER AVATAR WITH PHOTO ───────────────────── */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+
+/* ── PROFILE PHOTO FIELD ──────────────────────── */
+.profile-photo-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.profile-photo-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  border: 3px solid var(--line);
+}
+
+.profile-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+
+.profile-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-photo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+.profile-photo-label svg { width: 14px; height: 14px; }
+
+/* ── DIETARY PREFERENCES ──────────────────────── */
+.dietary-field { display: flex; flex-direction: column; gap: 10px; }
+
+.dietary-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--olive-dark);
+  margin: 0;
+}
+
+.dietary-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dietary-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400 !important;
+  color: var(--ink) !important;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.dietary-option:hover { background: var(--surface); border-color: var(--lime); }
+.dietary-option input { width: 15px; height: 15px; accent-color: var(--lime-dark); flex-shrink: 0; }
+.dietary-option input:checked + span { font-weight: 600; color: var(--olive-dark); }
+
+/* ── INPUT WITH TOGGLE (show/hide password) ───── */
+.password-field-wrap { display: flex; flex-direction: column; gap: 6px; }
+.password-field-wrap label { gap: 0; }
+
+.input-with-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-toggle input {
+  width: 100%;
+  padding-right: 44px !important;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.toggle-password:hover { color: var(--ink); }
+.toggle-password svg { width: 18px; height: 18px; }
+
+@media (max-width: 480px) {
+  .dietary-options { grid-template-columns: 1fr; }
+  .profile-photo-field { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── AUTH LANGUAGE TOGGLE ─────────────────────── */
+.auth-lang-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.auth-lang-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+  letter-spacing: 0.05em;
+}
+
+.auth-lang-btn.active { color: var(--olive-dark); }
+.auth-lang-btn:hover { color: var(--ink); }
+.auth-lang-sep { font-size: 12px; color: var(--line); }

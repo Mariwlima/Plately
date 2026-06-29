@@ -27,6 +27,11 @@
     <!-- LOGIN SCREEN -->
     <div class="auth-screen" id="authScreen" hidden>
       <div class="auth-card">
+        <div class="auth-lang-toggle">
+          <button class="auth-lang-btn active" type="button" id="authLangPT">PT</button>
+          <span class="auth-lang-sep">/</span>
+          <button class="auth-lang-btn" type="button" id="authLangEN">EN</button>
+        </div>
         <div class="auth-brand">
           <svg class="plately-icon plately-icon-login" viewBox="0 0 140 140" aria-hidden="true">
             <path d="M30 15 L30 115 M30 15 C70 15 90 30 90 55 C90 80 70 90 30 90" fill="none" stroke="#1E3D2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
@@ -51,10 +56,18 @@
             <span id="authEmailLabel">E-mail</span>
             <input id="authEmail" type="email" required autocomplete="email" placeholder="seu@email.com" />
           </label>
-          <label>
-            <span id="authPasswordLabel">Senha</span>
-            <input id="authPassword" type="password" required autocomplete="current-password" minlength="8" placeholder="••••••••" />
-          </label>
+          <div class="password-field-wrap">
+            <label>
+              <span id="authPasswordLabel">Senha</span>
+              <div class="input-with-toggle">
+                <input id="authPassword" type="password" required autocomplete="current-password" minlength="8" placeholder="••••••••" />
+                <button class="toggle-password" type="button" id="toggleAuthPassword" aria-label="Mostrar senha">
+                  <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="eye-off-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+            </label>
+          </div>
           <div class="password-strength" id="passwordStrength" hidden>
             <div class="strength-bars">
               <span class="strength-bar" data-bar="1"></span>
@@ -68,6 +81,18 @@
               <li data-rule="number">Um número</li>
               <li data-rule="symbol">Um símbolo (!@#$...)</li>
             </ul>
+          </div>
+          <div class="password-field-wrap" id="authConfirmPasswordField" hidden>
+            <label>
+              <span id="authConfirmPasswordLabel">Confirmar senha</span>
+              <div class="input-with-toggle">
+                <input id="authConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="••••••••" />
+                <button class="toggle-password" type="button" id="toggleAuthConfirmPassword" aria-label="Mostrar senha">
+                  <svg class="eye-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="eye-off-icon" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                </button>
+              </div>
+            </label>
           </div>
           <label class="terms-check" id="authTermsField" hidden>
             <input id="authTermsCheckbox" type="checkbox" />
@@ -108,6 +133,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
           </button>
         </div>
+        <p class="sidebar-greeting" id="sidebarGreeting">Olá! 👋</p>
 
         <nav class="sidebar-nav" aria-label="Menu principal">
           <p class="nav-section-label">Menu</p>
@@ -170,7 +196,10 @@
 
         <div class="sidebar-footer">
           <div class="user-info" id="userInfo">
-            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-avatar" id="userAvatar">
+              <img id="userAvatarImg" alt="" hidden />
+              <span id="userAvatarInitial">U</span>
+            </div>
             <span class="user-email" id="userEmail">usuário@email.com</span>
             <button class="settings-button" type="button" id="openSettingsBtn" aria-label="Configurações da conta">
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -508,6 +537,22 @@
           </div>
 
           <form id="profileForm" class="settings-form" data-settings-panel="profile">
+            <div class="profile-photo-field">
+              <div class="profile-photo-preview" id="profilePhotoPreview">
+                <img id="profilePhotoImg" alt="" hidden />
+                <span id="profilePhotoInitial">U</span>
+              </div>
+              <div class="profile-photo-actions">
+                <label class="file-label profile-photo-label">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span id="profilePhotoLabel">Alterar foto</span>
+                  <input id="profilePhotoInput" type="file" accept="image/*" />
+                </label>
+                <button class="secondary-button" type="button" id="removeProfilePhoto" hidden>
+                  <span id="removeProfilePhotoLabel">Remover foto</span>
+                </button>
+              </div>
+            </div>
             <label>
               <span id="profileNameLabel">Nome</span>
               <input id="profileName" type="text" required placeholder="Seu nome" />
@@ -516,6 +561,39 @@
               <span id="profileBirthdayLabel">Data de nascimento</span>
               <input id="profileBirthday" type="date" />
             </label>
+            <label>
+              <span id="profilePhoneLabel">Telefone</span>
+              <input id="profilePhone" type="tel" placeholder="+55 (11) 99999-9999" />
+            </label>
+            <div class="dietary-field">
+              <p class="dietary-label" id="dietaryLabel">Preferências alimentares</p>
+              <div class="dietary-options">
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietVegetarian" value="vegetarian" />
+                  <span>🥦 Vegetariano</span>
+                </label>
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietVegan" value="vegan" />
+                  <span>🌱 Vegano</span>
+                </label>
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietGlutenFree" value="gluten-free" />
+                  <span>🌾 Sem glúten</span>
+                </label>
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietLactoseFree" value="lactose-free" />
+                  <span>🥛 Sem lactose</span>
+                </label>
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietLowCarb" value="low-carb" />
+                  <span>🥩 Low carb</span>
+                </label>
+                <label class="dietary-option">
+                  <input type="checkbox" id="dietHalal" value="halal" />
+                  <span>☪️ Halal</span>
+                </label>
+              </div>
+            </div>
             <p class="settings-note" id="profileEmailNote">E-mail: <span id="profileEmailDisplay"></span></p>
             <p class="auth-error" id="profileError" hidden></p>
             <p class="auth-success" id="profileSuccess" hidden></p>

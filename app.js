@@ -1,4 +1,8 @@
-// ── TIMER STATE (declarado no topo para evitar erro de hoisting) ──
+// ── VARIÁVEIS GLOBAIS (declaradas no topo para evitar hoisting) ──
+let lang = localStorage.getItem("mealPlanner.lang") || "pt";
+const settingsStorageKey = (uid) => `mealPlanner.profile.${uid}`;
+
+// ── TIMER STATE ──────────────────────────────────
 let timerTotalSeconds = 10 * 60;
 let timerRemainingSeconds = timerTotalSeconds;
 let timerIntervalId = null;
@@ -36,6 +40,33 @@ const googleSignInBtn = document.querySelector("#googleSignInBtn");
 const logoutBtn = document.querySelector("#logoutBtn");
 const userEmailEl = document.querySelector("#userEmail");
 const userAvatarEl = document.querySelector("#userAvatar");
+const userAvatarImg = document.querySelector("#userAvatarImg");
+const userAvatarInitial = document.querySelector("#userAvatarInitial");
+const sidebarGreeting = document.querySelector("#sidebarGreeting");
+
+function updateSidebarAvatar(name, photoUrl) {
+  const initial = (name || "U").charAt(0).toUpperCase();
+  userAvatarInitial.textContent = initial;
+  if (photoUrl) {
+    userAvatarImg.src = photoUrl;
+    userAvatarImg.hidden = false;
+    userAvatarInitial.hidden = true;
+  } else {
+    userAvatarImg.hidden = true;
+    userAvatarInitial.hidden = false;
+  }
+}
+
+function updateSidebarGreeting(name) {
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const firstName = (name || "").split(" ")[0];
+  if (firstName) {
+    sidebarGreeting.textContent = langKey === "pt" ? `Olá, ${firstName}! 👋` : `Hello, ${firstName}! 👋`;
+    sidebarGreeting.hidden = false;
+  } else {
+    sidebarGreeting.hidden = true;
+  }
+}
 const passwordStrength = document.querySelector("#passwordStrength");
 const authTermsField = document.querySelector("#authTermsField");
 const authTermsCheckbox = document.querySelector("#authTermsCheckbox");
@@ -55,6 +86,7 @@ const authTexts = {
     nameLabel: "Nome",
     emailLabel: "E-mail",
     passwordLabel: "Senha",
+    confirmPasswordLabel: "Confirmar senha",
     loginSubmit: "Entrar",
     signupSubmit: "Criar conta",
     divider: "ou",
@@ -69,6 +101,7 @@ const authTexts = {
       "auth/weak-password": "A senha precisa ter ao menos 6 caracteres.",
       "weak-password-custom": "Sua senha precisa atender a todos os requisitos de segurança.",
       "terms-required": "Você precisa aceitar os Termos de Uso e a Política de Privacidade.",
+      "passwords-dont-match": "As senhas não coincidem.",
       default: "Ocorreu um erro. Tente novamente.",
     },
   },
@@ -80,6 +113,7 @@ const authTexts = {
     nameLabel: "Name",
     emailLabel: "Email",
     passwordLabel: "Password",
+    confirmPasswordLabel: "Confirm password",
     loginSubmit: "Sign in",
     signupSubmit: "Sign up",
     divider: "or",
@@ -94,6 +128,7 @@ const authTexts = {
       "auth/weak-password": "Password must be at least 6 characters.",
       "weak-password-custom": "Your password needs to meet all security requirements.",
       "terms-required": "You need to accept the Terms of Use and Privacy Policy.",
+      "passwords-dont-match": "Passwords don't match.",
       default: "Something went wrong. Please try again.",
     },
   },
@@ -108,6 +143,7 @@ function applyAuthTranslations() {
   document.querySelector("#authNameLabel").textContent = tx.nameLabel;
   document.querySelector("#authEmailLabel").textContent = tx.emailLabel;
   document.querySelector("#authPasswordLabel").textContent = tx.passwordLabel;
+  document.querySelector("#authConfirmPasswordLabel").textContent = tx.confirmPasswordLabel;
   authSubmitBtn.textContent = authMode === "login" ? tx.loginSubmit : tx.signupSubmit;
   document.querySelector("#authDividerText").textContent = tx.divider;
   document.querySelector("#googleSignInText").textContent = tx.google;
@@ -138,9 +174,26 @@ function setAuthMode(mode) {
   passwordStrength.hidden = mode !== "signup";
   authTermsField.hidden = mode !== "signup";
   authTermsCheckbox.required = mode === "signup";
+  document.querySelector("#authConfirmPasswordField").hidden = mode !== "signup";
+  document.querySelector("#authConfirmPassword").required = mode === "signup";
   authError.hidden = true;
   applyAuthTranslations();
 }
+
+function togglePasswordVisibility(inputEl, toggleBtn) {
+  const isPassword = inputEl.type === "password";
+  inputEl.type = isPassword ? "text" : "password";
+  toggleBtn.querySelector(".eye-icon").hidden = isPassword;
+  toggleBtn.querySelector(".eye-off-icon").hidden = !isPassword;
+}
+
+document.querySelector("#toggleAuthPassword").addEventListener("click", () => {
+  togglePasswordVisibility(document.querySelector("#authPassword"), document.querySelector("#toggleAuthPassword"));
+});
+
+document.querySelector("#toggleAuthConfirmPassword").addEventListener("click", () => {
+  togglePasswordVisibility(document.querySelector("#authConfirmPassword"), document.querySelector("#toggleAuthConfirmPassword"));
+});
 
 function checkPasswordStrength(password) {
   const rules = {
@@ -208,8 +261,13 @@ function showApp(user) {
   authScreen.hidden = true;
   appShell.hidden = false;
   userEmailEl.textContent = user.email || "";
-  const initialSource = user.displayName || user.email || "U";
-  userAvatarEl.textContent = initialSource.charAt(0).toUpperCase();
+
+  const savedProfile = JSON.parse(localStorage.getItem(settingsStorageKey(user.uid)) || "{}");
+  const displayName = user.displayName || savedProfile.name || "";
+  const photoUrl = savedProfile.photoUrl || user.photoURL || "";
+
+  updateSidebarAvatar(displayName || user.email, photoUrl);
+  updateSidebarGreeting(displayName);
 
   if (currentUserId !== user.uid) {
     currentUserId = user.uid;
@@ -250,6 +308,11 @@ authForm.addEventListener("submit", async (event) => {
     const { metCount } = checkPasswordStrength(authPassword.value);
     if (metCount < 4) {
       showAuthError("weak-password-custom");
+      return;
+    }
+    const confirmPassword = document.querySelector("#authConfirmPassword").value;
+    if (authPassword.value !== confirmPassword) {
+      showAuthError("passwords-dont-match");
       return;
     }
     if (!authTermsCheckbox.checked) {
@@ -303,6 +366,22 @@ if (window.firebaseAuth) {
 }
 
 applyAuthTranslations();
+
+// Auth page language toggle
+function setAuthLang(newLang) {
+  lang = newLang;
+  localStorage.setItem("mealPlanner.lang", lang);
+  document.querySelector("#authLangPT").classList.toggle("active", lang === "pt");
+  document.querySelector("#authLangEN").classList.toggle("active", lang === "en");
+  applyAuthTranslations();
+}
+
+document.querySelector("#authLangPT").addEventListener("click", () => setAuthLang("pt"));
+document.querySelector("#authLangEN").addEventListener("click", () => setAuthLang("en"));
+
+// Set initial state of auth lang buttons
+document.querySelector("#authLangPT").classList.toggle("active", lang === "pt");
+document.querySelector("#authLangEN").classList.toggle("active", lang === "en");
 
 const translations = {
   pt: {
@@ -406,7 +485,6 @@ const translations = {
 const categories = ["breakfast", "lunch", "dinner", "dessert", "snack"];
 const recipeTypes = ["seafood", "meat", "chicken", "pasta", "soup", "other"];
 
-let lang = localStorage.getItem("mealPlanner.lang") || "pt";
 let activeView = "recipes";
 let activeCategoryFilter = "all";
 let activeTypeFilter = "all";
@@ -777,6 +855,8 @@ function applyTranslations() {
       settingsTitle: "Configurações da conta",
       tabProfile: "Perfil", tabPassword: "Senha", tabPrivacy: "Privacidade",
       profileNameLabel: "Nome", profileBirthdayLabel: "Data de nascimento",
+      profilePhoneLabel: "Telefone", dietaryLabel: "Preferências alimentares",
+      profilePhotoLabel: "Alterar foto", removeProfilePhotoLabel: "Remover foto",
       profileSaveBtn: "Salvar alterações",
       currentPasswordLabel: "Senha atual", newPasswordLabel: "Nova senha",
       passwordSaveBtn: "Alterar senha",
@@ -792,6 +872,8 @@ function applyTranslations() {
       settingsTitle: "Account settings",
       tabProfile: "Profile", tabPassword: "Password", tabPrivacy: "Privacy",
       profileNameLabel: "Name", profileBirthdayLabel: "Date of birth",
+      profilePhoneLabel: "Phone", dietaryLabel: "Dietary preferences",
+      profilePhotoLabel: "Change photo", removeProfilePhotoLabel: "Remove photo",
       profileSaveBtn: "Save changes",
       currentPasswordLabel: "Current password", newPasswordLabel: "New password",
       passwordSaveBtn: "Change password",
@@ -811,6 +893,10 @@ function applyTranslations() {
   document.querySelector("#settingsTabPrivacy").textContent = sx.tabPrivacy;
   document.querySelector("#profileNameLabel").textContent = sx.profileNameLabel;
   document.querySelector("#profileBirthdayLabel").textContent = sx.profileBirthdayLabel;
+  document.querySelector("#profilePhoneLabel").textContent = sx.profilePhoneLabel;
+  document.querySelector("#dietaryLabel").textContent = sx.dietaryLabel;
+  document.querySelector("#profilePhotoLabel").textContent = sx.profilePhotoLabel;
+  document.querySelector("#removeProfilePhotoLabel").textContent = sx.removeProfilePhotoLabel;
   document.querySelector("#profileSaveBtn").textContent = sx.profileSaveBtn;
   document.querySelector("#currentPasswordLabel").textContent = sx.currentPasswordLabel;
   document.querySelector("#newPasswordLabel").textContent = sx.newPasswordLabel;
@@ -982,6 +1068,8 @@ document.querySelector("#langToggle").addEventListener("click", () => {
   localStorage.setItem("mealPlanner.lang", lang);
   applyTranslations();
   applyAuthTranslations();
+  const user = window.firebaseAuth?.auth?.currentUser;
+  if (user) updateSidebarGreeting(user.displayName || "");
 });
 
 applyTranslations();
@@ -1177,15 +1265,34 @@ const profileForm = document.querySelector("#profileForm");
 const passwordForm = document.querySelector("#passwordForm");
 const profileName = document.querySelector("#profileName");
 const profileBirthday = document.querySelector("#profileBirthday");
+const profilePhone = document.querySelector("#profilePhone");
 const profileEmailDisplay = document.querySelector("#profileEmailDisplay");
 const profileError = document.querySelector("#profileError");
 const profileSuccess = document.querySelector("#profileSuccess");
+const profilePhotoInput = document.querySelector("#profilePhotoInput");
+const profilePhotoImg = document.querySelector("#profilePhotoImg");
+const profilePhotoInitial = document.querySelector("#profilePhotoInitial");
+const removeProfilePhoto = document.querySelector("#removeProfilePhoto");
 const currentPasswordInput = document.querySelector("#currentPassword");
 const newPasswordInput = document.querySelector("#newPassword");
 const passwordError = document.querySelector("#passwordError");
 const passwordSuccess = document.querySelector("#passwordSuccess");
 
-const settingsStorageKey = (uid) => `mealPlanner.profile.${uid}`;
+let currentProfilePhotoDataUrl = null;
+
+function updateProfilePhotoPreview(url, initial) {
+  if (url) {
+    profilePhotoImg.src = url;
+    profilePhotoImg.hidden = false;
+    profilePhotoInitial.hidden = true;
+    removeProfilePhoto.hidden = false;
+  } else {
+    profilePhotoImg.hidden = true;
+    profilePhotoInitial.hidden = false;
+    profilePhotoInitial.textContent = initial || "U";
+    removeProfilePhoto.hidden = true;
+  }
+}
 
 function openSettingsModal() {
   const user = window.firebaseAuth.auth.currentUser;
@@ -1194,6 +1301,18 @@ function openSettingsModal() {
   profileEmailDisplay.textContent = user.email || "";
   const savedProfile = JSON.parse(localStorage.getItem(settingsStorageKey(user.uid)) || "{}");
   profileBirthday.value = savedProfile.birthday || "";
+  profilePhone.value = savedProfile.phone || "";
+
+  const dietaryPrefs = savedProfile.dietary || [];
+  ["Vegetarian", "Vegan", "GlutenFree", "LactoseFree", "LowCarb", "Halal"].forEach((pref) => {
+    const el = document.querySelector(`#diet${pref}`);
+    if (el) el.checked = dietaryPrefs.includes(el.value);
+  });
+
+  currentProfilePhotoDataUrl = savedProfile.photoUrl || user.photoURL || null;
+  const initial = (user.displayName || user.email || "U").charAt(0).toUpperCase();
+  updateProfilePhotoPreview(currentProfilePhotoDataUrl, initial);
+
   profileError.hidden = true;
   profileSuccess.hidden = true;
   passwordError.hidden = true;
@@ -1216,6 +1335,25 @@ settingsOverlay.addEventListener("click", (event) => {
   if (event.target === settingsOverlay) closeSettingsModal();
 });
 
+// Profile photo upload
+profilePhotoInput.addEventListener("change", () => {
+  const file = profilePhotoInput.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    currentProfilePhotoDataUrl = String(reader.result);
+    updateProfilePhotoPreview(currentProfilePhotoDataUrl, profileName.value.charAt(0).toUpperCase());
+  });
+  reader.readAsDataURL(file);
+});
+
+removeProfilePhoto.addEventListener("click", () => {
+  currentProfilePhotoDataUrl = null;
+  profilePhotoInput.value = "";
+  const initial = (profileName.value || "U").charAt(0).toUpperCase();
+  updateProfilePhotoPreview(null, initial);
+});
+
 document.querySelectorAll(".settings-tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".settings-tab").forEach((t) => t.classList.remove("active"));
@@ -1234,14 +1372,30 @@ profileForm.addEventListener("submit", async (event) => {
   const user = window.firebaseAuth.auth.currentUser;
   if (!user) return;
 
+  const dietary = ["Vegetarian", "Vegan", "GlutenFree", "LactoseFree", "LowCarb", "Halal"]
+    .map((pref) => document.querySelector(`#diet${pref}`))
+    .filter((el) => el && el.checked)
+    .map((el) => el.value);
+
   try {
     await window.firebaseAuth.updateDisplayName(profileName.value.trim());
-    localStorage.setItem(settingsStorageKey(user.uid), JSON.stringify({ birthday: profileBirthday.value }));
+    const profileData = {
+      birthday: profileBirthday.value,
+      phone: profilePhone.value.trim(),
+      dietary,
+      photoUrl: currentProfilePhotoDataUrl || "",
+    };
+    localStorage.setItem(settingsStorageKey(user.uid), JSON.stringify(profileData));
+
+    const displayName = profileName.value.trim();
     userEmailEl.textContent = user.email || "";
-    userAvatarEl.textContent = (profileName.value || user.email || "U").charAt(0).toUpperCase();
+    updateSidebarAvatar(displayName || user.email, currentProfilePhotoDataUrl || "");
+    updateSidebarGreeting(displayName);
+
     const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
     profileSuccess.textContent = langKey === "pt" ? "Perfil atualizado com sucesso!" : "Profile updated successfully!";
     profileSuccess.hidden = false;
+    showToast(langKey === "pt" ? "Perfil atualizado!" : "Profile updated!");
   } catch (error) {
     const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
     profileError.textContent = langKey === "pt" ? "Não foi possível salvar. Tente novamente." : "Could not save. Please try again.";
