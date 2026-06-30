@@ -655,8 +655,13 @@ function render() {
 
 function renderViews() {
   const showShopping = activeView === "shopping";
+  const showFavorites = activeView === "favorites";
   recipesView.hidden = showShopping;
   shoppingView.hidden = !showShopping;
+
+  // Esconde elementos desnecessários nas views de compras e favoritas
+  document.querySelector(".topbar").hidden = showShopping;
+  document.querySelector(".stats-row").hidden = showShopping || showFavorites;
 
   document.querySelectorAll(".nav-item[data-view]").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.view === activeView);
@@ -727,33 +732,104 @@ function renderShopping() {
   shoppingCount.textContent = t().shoppingCount(shoppingItems.filter((item) => !item.done).length);
 }
 
+// ── SHOPPING CATEGORIES ──────────────────────────
+const shoppingCategories = {
+  pt: {
+    meat:    { label: "🥩 Carnes e frios", keywords: ["frango", "carne", "bife", "peixe", "atum", "salmão", "camarão", "presunto", "bacon", "linguiça", "salsicha", "peru", "cordeiro", "porco", "costela", "file", "filé", "patinho", "picanha"] },
+    dairy:   { label: "🥛 Laticínios", keywords: ["leite", "queijo", "manteiga", "iogurte", "creme", "nata", "requeijão", "mussarela", "parmesão", "ricota", "cream cheese"] },
+    produce: { label: "🥦 Hortifruti", keywords: ["cenoura", "batata", "cebola", "alho", "tomate", "alface", "rúcula", "espinafre", "brócolis", "abobrinha", "pepino", "pimentão", "milho", "beterraba", "couve", "inhame", "limão", "laranja", "maçã", "banana", "morango", "uva", "abacate", "manga", "abacaxi", "salsa", "salsinha", "coentro", "cebolinha", "manjericão", "hortelã"] },
+    grains:  { label: "🌾 Mercearia", keywords: ["arroz", "massa", "macarrão", "farinha", "feijão", "lentilha", "grão", "aveia", "quinoa", "cuscuz", "chia", "granola", "fubá", "tapioca", "amido", "fermento", "açúcar", "sal", "chocolate", "cacau"] },
+    oils:    { label: "🧴 Óleos e temperos", keywords: ["azeite", "óleo", "vinagre", "molho", "shoyu", "catchup", "mostarda", "maionese", "pimenta", "canela", "orégano", "cúrcuma", "colorau", "cominho", "noz-moscada", "louro", "ervas"] },
+    bakery:  { label: "🍞 Padaria", keywords: ["pão", "torrada", "bisnaguinha", "bolo", "biscoito", "bolacha", "waffle"] },
+    canned:  { label: "🥫 Conservas e enlatados", keywords: ["lata", "enlatado", "extrato", "polpa", "aveado", "sardinha", "atum em lata", "ervilha", "milho em lata", "palmito"] },
+    drinks:  { label: "🧃 Bebidas", keywords: ["água", "suco", "refrigerante", "cerveja", "vinho", "café", "chá", "achocolatado"] },
+    frozen:  { label: "🧊 Congelados", keywords: ["congelado", "sorvete", "nugget", "hambúrguer congelado"] },
+    hygiene: { label: "🧹 Limpeza e higiene", keywords: ["sabão", "detergente", "desinfetante", "esponja", "papel", "shampoo", "xampu", "condicionador", "sabonete", "creme dental", "pasta de dente", "escova", "desodorante", "papel higiênico", "toalha", "alvejante", "água sanitária", "limpa", "limpeza", "saco de lixo", "lava", "coador"] },
+    other:   { label: "🛒 Outros", keywords: [] },
+  },
+  en: {
+    meat:    { label: "🥩 Meat & deli", keywords: ["chicken", "beef", "steak", "fish", "tuna", "salmon", "shrimp", "ham", "bacon", "sausage", "turkey", "lamb", "pork", "meat", "fillet", "ribs", "ground"] },
+    dairy:   { label: "🥛 Dairy", keywords: ["milk", "cheese", "butter", "yogurt", "cream", "sour cream", "mozzarella", "parmesan", "ricotta", "cream cheese", "whey"] },
+    produce: { label: "🥦 Produce", keywords: ["carrot", "potato", "onion", "garlic", "tomato", "lettuce", "spinach", "broccoli", "zucchini", "cucumber", "pepper", "corn", "beet", "lemon", "orange", "apple", "banana", "strawberry", "grape", "avocado", "mango", "pineapple", "parsley", "cilantro", "basil", "mint", "ginger", "mushroom", "celery", "cabbage", "cauliflower"] },
+    grains:  { label: "🌾 Pantry", keywords: ["rice", "pasta", "flour", "beans", "lentils", "oats", "quinoa", "sugar", "salt", "chocolate", "cocoa", "baking powder", "yeast", "bread crumbs", "cornmeal", "tapioca", "chia", "granola"] },
+    oils:    { label: "🧴 Oils & condiments", keywords: ["olive oil", "oil", "vinegar", "sauce", "soy sauce", "ketchup", "mustard", "mayonnaise", "pepper", "cinnamon", "oregano", "spice", "seasoning", "dressing", "broth", "stock"] },
+    bakery:  { label: "🍞 Bakery", keywords: ["bread", "toast", "cake", "cookie", "cracker", "waffle", "muffin", "bagel", "bun", "roll"] },
+    canned:  { label: "🥫 Canned goods", keywords: ["canned", "sardine", "tuna can", "peas", "corn can", "tomato paste", "coconut milk", "palm heart"] },
+    drinks:  { label: "🧃 Drinks", keywords: ["water", "juice", "soda", "beer", "wine", "coffee", "tea", "milk tea", "energy drink", "smoothie"] },
+    frozen:  { label: "🧊 Frozen", keywords: ["frozen", "ice cream", "nugget", "burger", "pizza frozen"] },
+    hygiene: { label: "🧹 Cleaning & hygiene", keywords: ["soap", "detergent", "disinfectant", "sponge", "paper", "shampoo", "conditioner", "toothpaste", "toothbrush", "deodorant", "toilet paper", "tissue", "towel", "bleach", "cleaning", "trash bag", "dish", "laundry"] },
+    other:   { label: "🛒 Other", keywords: [] },
+  },
+};
+
+function categorizeShoppingItem(name) {
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const categories = shoppingCategories[langKey] || shoppingCategories.pt;
+  const normalized = name.toLowerCase().trim();
+
+  for (const [key, cat] of Object.entries(categories)) {
+    if (key === "other") continue;
+    if (cat.keywords.some((kw) => {
+      const re = new RegExp(`(^|\\s|,)${kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|,|$)`, "i");
+      return re.test(normalized);
+    })) return key;
+  }
+  return "other";
+}
+
 function renderShoppingList(list, emptyElement) {
   list.replaceChildren();
   emptyElement.style.display = shoppingItems.length ? "none" : "block";
+  if (!shoppingItems.length) return;
 
+  const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+  const categories = shoppingCategories[langKey] || shoppingCategories.pt;
+
+  // Group items by category
+  const grouped = {};
   shoppingItems.forEach((item) => {
-    const row = document.createElement("li");
-    const checkbox = document.createElement("input");
-    const label = document.createElement("span");
-    const deleteButton = document.createElement("button");
+    const cat = categorizeShoppingItem(item.name);
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
 
-    checkbox.type = "checkbox";
-    checkbox.checked = item.done;
-    label.textContent = item.name;
-    label.classList.toggle("done", item.done);
-    deleteButton.type = "button";
-    deleteButton.className = "shopping-delete";
-    deleteButton.setAttribute("aria-label", `Remover ${item.name}`);
-    deleteButton.textContent = "×";
+  // Render in category order
+  const categoryOrder = Object.keys(categories);
+  categoryOrder.forEach((catKey) => {
+    const items = grouped[catKey];
+    if (!items || items.length === 0) return;
 
-    checkbox.addEventListener("change", () => { item.done = checkbox.checked; render(); });
-    deleteButton.addEventListener("click", () => {
-      shoppingItems = shoppingItems.filter((s) => s.id !== item.id);
-      render();
+    // Category header
+    const header = document.createElement("li");
+    header.className = "shopping-category-header";
+    header.textContent = categories[catKey].label;
+    list.append(header);
+
+    // Items in this category
+    items.forEach((item) => {
+      const row = document.createElement("li");
+      const checkbox = document.createElement("input");
+      const label = document.createElement("span");
+      const deleteButton = document.createElement("button");
+
+      checkbox.type = "checkbox";
+      checkbox.checked = item.done;
+      label.textContent = item.name;
+      label.classList.toggle("done", item.done);
+      deleteButton.type = "button";
+      deleteButton.className = "shopping-delete";
+      deleteButton.setAttribute("aria-label", `Remover ${item.name}`);
+      deleteButton.textContent = "×";
+
+      checkbox.addEventListener("change", () => { item.done = checkbox.checked; render(); });
+      deleteButton.addEventListener("click", () => {
+        shoppingItems = shoppingItems.filter((s) => s.id !== item.id);
+        render();
+      });
+
+      row.append(checkbox, label, deleteButton);
+      list.append(row);
     });
-
-    row.append(checkbox, label, deleteButton);
-    list.append(row);
   });
 }
 
