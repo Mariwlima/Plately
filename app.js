@@ -427,6 +427,14 @@ const translations = {
     emptyState: "Nenhuma receita por aqui ainda.",
     noSteps: "Sem preparo anotado.",
     addShopping: "Adicionar compras",
+    viewRecipe: "Ver receita",
+    startCooking: "Iniciar modo de cozimento",
+    cookingProgress: (current, total) => `Passo ${current} de ${total}`,
+    cookPrev: "Anterior",
+    cookNext: "Próximo",
+    cookFinish: "Concluir",
+    detailIngredients: "Ingredientes",
+    detailSteps: "Modo de preparo",
     addButton: "Adicionar",
     newRecipe: "Nova receita",
     modalTitle: "Nova receita",
@@ -475,6 +483,14 @@ const translations = {
     emptyState: "No recipes here yet.",
     noSteps: "No instructions added.",
     addShopping: "Add to shopping",
+    viewRecipe: "View recipe",
+    startCooking: "Start cooking mode",
+    cookingProgress: (current, total) => `Step ${current} of ${total}`,
+    cookPrev: "Previous",
+    cookNext: "Next",
+    cookFinish: "Finish",
+    detailIngredients: "Ingredients",
+    detailSteps: "Instructions",
     addButton: "Add",
     newRecipe: "New recipe",
     modalTitle: "New recipe",
@@ -761,12 +777,14 @@ function renderRecipes() {
 
     card.querySelector(".steps-preview").textContent = recipe.steps || tx.noSteps;
     card.querySelector(".add-shopping").textContent = tx.addShopping;
+    card.querySelector(".view-recipe").textContent = tx.viewRecipe;
     card.querySelector(".add-shopping").addEventListener("click", () => {
       const scaledIngredients = recipe.ingredients.map((ing) =>
         scaleIngredient(ing, baseServings, currentServings)
       );
       addIngredients(scaledIngredients);
     });
+    card.querySelector(".view-recipe").addEventListener("click", () => openRecipeDetail(recipe));
     card.querySelector(".edit-recipe").addEventListener("click", () => editRecipe(recipe.id));
     card.querySelector(".delete-recipe").addEventListener("click", () => deleteRecipe(recipe.id));
     favorite.addEventListener("click", () => toggleFavorite(recipe.id));
@@ -1701,5 +1719,151 @@ importDataInput.addEventListener("change", async () => {
     importError.hidden = false;
   } finally {
     importDataInput.value = "";
+  }
+});
+
+// ── RECIPE DETAIL MODAL ───────────────────────────
+const recipeDetailOverlay = document.querySelector("#recipeDetailOverlay");
+const closeDetailModalBtn = document.querySelector("#closeDetailModal");
+const startCookingBtn = document.querySelector("#startCookingBtn");
+
+let currentDetailRecipe = null;
+
+function openRecipeDetail(recipe) {
+  const tx = t();
+  currentDetailRecipe = recipe;
+
+  document.querySelector("#detailTitle").textContent = recipe.name;
+  document.querySelector("#detailPhoto").src = recipe.photo || placeholderPhotos[recipe.category];
+  document.querySelector("#detailPhoto").alt = recipe.name;
+
+  const categoryPill = document.querySelector("#detailCategory");
+  categoryPill.textContent = tx.categories[recipe.category] || recipe.category;
+  categoryPill.className = `category-pill ${recipe.category}`;
+
+  document.querySelector("#detailTime").textContent = `⏱ ${recipe.time} min`;
+  document.querySelector("#detailDifficulty").textContent = `📊 ${tx.difficulties[recipe.difficulty] || recipe.difficulty}`;
+  document.querySelector("#detailServings").textContent = `🍽 ${recipe.servings || 4} ${lang === "pt" ? "porções" : "servings"}`;
+
+  document.querySelector("#detailIngredientsTitle").textContent = tx.detailIngredients;
+  document.querySelector("#detailStepsTitle").textContent = tx.detailSteps;
+  document.querySelector("#startCookingLabel").textContent = tx.startCooking;
+
+  const ingredientsList = document.querySelector("#detailIngredients");
+  ingredientsList.replaceChildren();
+  recipe.ingredients.forEach((ing) => {
+    const li = document.createElement("li");
+    li.textContent = ing;
+    ingredientsList.append(li);
+  });
+
+  document.querySelector("#detailSteps").textContent = recipe.steps || tx.noSteps;
+
+  const cookBtn = document.querySelector(".cook-btn");
+  cookBtn.hidden = !recipe.steps || recipe.steps.trim() === "";
+
+  recipeDetailOverlay.hidden = false;
+}
+
+closeDetailModalBtn.addEventListener("click", () => { recipeDetailOverlay.hidden = true; });
+recipeDetailOverlay.addEventListener("click", (e) => {
+  if (e.target === recipeDetailOverlay) recipeDetailOverlay.hidden = true;
+});
+
+// ── COOKING MODE ──────────────────────────────────
+const cookingOverlay = document.querySelector("#cookingOverlay");
+const closeCookingModalBtn = document.querySelector("#closeCookingModal");
+const cookPrevBtn = document.querySelector("#cookPrevBtn");
+const cookNextBtn = document.querySelector("#cookNextBtn");
+
+let cookingSteps = [];
+let cookingCurrentStep = 0;
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if ("wakeLock" in navigator) {
+    try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) { }
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+function parseCookingSteps(stepsText) {
+  if (!stepsText) return [];
+  return stepsText
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+function updateCookingUI() {
+  const tx = t();
+  const total = cookingSteps.length;
+  const current = cookingCurrentStep + 1;
+
+  document.querySelector("#cookingProgress").textContent = tx.cookingProgress(current, total);
+  document.querySelector("#cookingStepNumber").textContent = current;
+  document.querySelector("#cookingStepText").textContent = cookingSteps[cookingCurrentStep];
+
+  cookPrevBtn.disabled = cookingCurrentStep === 0;
+  document.querySelector("#cookPrevLabel").textContent = tx.cookPrev;
+
+  const isLast = cookingCurrentStep === total - 1;
+  document.querySelector("#cookNextLabel").textContent = isLast ? tx.cookFinish : tx.cookNext;
+  cookNextBtn.classList.toggle("cooking-finish", isLast);
+
+  const dotsContainer = document.querySelector("#cookingDots");
+  dotsContainer.replaceChildren();
+  cookingSteps.forEach((_, index) => {
+    const dot = document.createElement("span");
+    dot.className = "cooking-dot";
+    if (index < cookingCurrentStep) dot.classList.add("done");
+    if (index === cookingCurrentStep) dot.classList.add("active");
+    dotsContainer.append(dot);
+  });
+}
+
+startCookingBtn.addEventListener("click", () => {
+  if (!currentDetailRecipe) return;
+  cookingSteps = parseCookingSteps(currentDetailRecipe.steps);
+  if (cookingSteps.length === 0) return;
+  cookingCurrentStep = 0;
+  document.querySelector("#cookingTitle").textContent = currentDetailRecipe.name;
+  updateCookingUI();
+  recipeDetailOverlay.hidden = true;
+  cookingOverlay.hidden = false;
+  requestWakeLock();
+});
+
+cookPrevBtn.addEventListener("click", () => {
+  if (cookingCurrentStep > 0) {
+    cookingCurrentStep--;
+    updateCookingUI();
+  }
+});
+
+cookNextBtn.addEventListener("click", () => {
+  if (cookingCurrentStep < cookingSteps.length - 1) {
+    cookingCurrentStep++;
+    updateCookingUI();
+  } else {
+    cookingOverlay.hidden = true;
+    releaseWakeLock();
+    const langKey = localStorage.getItem("mealPlanner.lang") || "pt";
+    showToast(langKey === "pt" ? "Bom apetite! 🍽" : "Enjoy your meal! 🍽");
+  }
+});
+
+closeCookingModalBtn.addEventListener("click", () => {
+  cookingOverlay.hidden = true;
+  releaseWakeLock();
+});
+
+cookingOverlay.addEventListener("click", (e) => {
+  if (e.target === cookingOverlay) {
+    cookingOverlay.hidden = true;
+    releaseWakeLock();
   }
 });

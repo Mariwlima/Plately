@@ -421,6 +421,7 @@
           <p class="steps-preview"></p>
           <div class="card-actions">
             <button class="ghost-button add-shopping" type="button">Adicionar compras</button>
+            <button class="ghost-button view-recipe" type="button">Ver receita</button>
             <button class="icon-button edit-recipe" type="button" aria-label="Editar receita">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             </button>
@@ -431,6 +432,73 @@
         </div>
       </article>
     </template>
+
+    <!-- RECIPE DETAIL MODAL -->
+    <div class="modal-overlay cook-overlay" id="recipeDetailOverlay" hidden>
+      <div class="modal recipe-detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="modal-header">
+          <h2 id="detailTitle">Nome da receita</h2>
+          <button class="modal-close" type="button" id="closeDetailModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body detail-body">
+          <div class="detail-photo-wrap">
+            <img id="detailPhoto" alt="" />
+          </div>
+          <div class="detail-meta">
+            <span class="category-pill" id="detailCategory"></span>
+            <span class="meta-row-item" id="detailTime"></span>
+            <span class="meta-row-item" id="detailDifficulty"></span>
+            <span class="meta-row-item" id="detailServings"></span>
+          </div>
+          <div class="detail-section">
+            <h3 id="detailIngredientsTitle">Ingredientes</h3>
+            <ul id="detailIngredients" class="detail-ingredients"></ul>
+          </div>
+          <div class="detail-section">
+            <h3 id="detailStepsTitle">Modo de preparo</h3>
+            <p id="detailSteps" class="detail-steps"></p>
+          </div>
+          <button class="primary-button cook-btn" type="button" id="startCookingBtn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+            <span id="startCookingLabel">Iniciar modo de cozimento</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COOKING MODE MODAL -->
+    <div class="modal-overlay cook-overlay" id="cookingOverlay" hidden>
+      <div class="modal cooking-modal" role="dialog" aria-modal="true" aria-labelledby="cookingTitle">
+        <div class="cooking-header">
+          <div class="cooking-title-wrap">
+            <h2 id="cookingTitle">Nome da receita</h2>
+            <p class="cooking-progress" id="cookingProgress">Passo 1 de 5</p>
+          </div>
+          <button class="modal-close" type="button" id="closeCookingModal" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="cooking-body">
+          <div class="cooking-step-number" id="cookingStepNumber">1</div>
+          <p class="cooking-step-text" id="cookingStepText"></p>
+        </div>
+        <div class="cooking-footer">
+          <div class="cooking-dots" id="cookingDots"></div>
+          <div class="cooking-nav">
+            <button class="secondary-button cook-nav-btn" type="button" id="cookPrevBtn">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+              <span id="cookPrevLabel">Anterior</span>
+            </button>
+            <button class="primary-button cook-nav-btn" type="button" id="cookNextBtn">
+              <span id="cookNextLabel">Próximo</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- TIMER FLOATING BUTTON -->
     <button class="timer-fab" id="timerFab" type="button" aria-label="Abrir timer de preparo">
