@@ -47,8 +47,7 @@
           <button class="auth-tab" type="button" data-auth-tab="signup" id="authTabSignup">Criar conta</button>
         </div>
 
-        <form id="authForm" class="auth-form">
-          <label id="authNameField" hidden>
+        <form id="authForm" class="auth-form">          <label id="authNameField" hidden>
             <span id="authNameLabel">Nome</span>
             <input id="authName" type="text" autocomplete="name" placeholder="Seu nome" />
           </label>
@@ -102,19 +101,17 @@
           </label>
           <p class="auth-error" id="authError" hidden></p>
           <button class="primary-button auth-submit" type="submit" id="authSubmitBtn">Entrar</button>
+          <div class="auth-divider"><span id="authDividerText">ou</span></div>
+          <button class="google-button" type="button" id="googleSignInBtn">
+            <svg viewBox="0 0 48 48" aria-hidden="true" class="google-icon">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.5-.2-3-.5-4.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5c-7.4 0-13.8 4.1-17.2 10.2z"/>
+              <path fill="#4CAF50" d="M24 45.5c5.4 0 10.2-1.8 13.9-5l-6.4-5.4C29.5 36.6 26.9 37.5 24 37.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 41.3 16.2 45.5 24 45.5z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.4 5.4C40.9 36.5 44.5 31.4 44.5 25c0-1.5-.2-3-.9-4.5z"/>
+            </svg>
+            <span id="googleSignInText">Continuar com Google</span>
+          </button>
         </form>
-
-        <div class="auth-divider"><span id="authDividerText">ou</span></div>
-
-        <button class="google-button" type="button" id="googleSignInBtn">
-          <svg viewBox="0 0 48 48" aria-hidden="true" class="google-icon">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5 12.7 4.5 3.5 13.7 3.5 25S12.7 45.5 24 45.5 44.5 36.3 44.5 25c0-1.5-.2-3-.5-4.5z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.4 6.5 29.5 4.5 24 4.5c-7.4 0-13.8 4.1-17.2 10.2z"/>
-            <path fill="#4CAF50" d="M24 45.5c5.4 0 10.2-1.8 13.9-5l-6.4-5.4C29.5 36.6 26.9 37.5 24 37.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 41.3 16.2 45.5 24 45.5z"/>
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.4 5.4C40.9 36.5 44.5 31.4 44.5 25c0-1.5-.2-3-.9-4.5z"/>
-          </svg>
-          <span id="googleSignInText">Continuar com Google</span>
-        </button>
       </div>
     </div>
 
@@ -351,6 +348,10 @@
                 <input id="recipeTime" type="number" min="1" max="600" required placeholder="30" />
               </label>
               <label>
+                <span id="recipeServingsLabel">Porções</span>
+                <input id="recipeServings" type="number" min="1" max="100" placeholder="4" />
+              </label>
+              <label>
                 Dificuldade
                 <select id="recipeDifficulty" required>
                   <option value="Easy">Fácil</option>
@@ -407,6 +408,14 @@
           <div class="meta-row">
             <span class="time-meta"></span>
             <span class="difficulty-meta"></span>
+          </div>
+          <div class="servings-control">
+            <button class="servings-btn servings-dec" type="button" aria-label="Diminuir porções">−</button>
+            <span class="servings-display">
+              <span class="servings-count">4</span>
+              <span class="servings-label">porções</span>
+            </span>
+            <button class="servings-btn servings-inc" type="button" aria-label="Aumentar porções">+</button>
           </div>
           <ul class="ingredient-preview"></ul>
           <p class="steps-preview"></p>

@@ -407,7 +407,7 @@ const translations = {
     formLabels: {
       photo: "Foto da receita", addPhoto: "Adicionar foto", removePhoto: "Remover foto",
       name: "Nome da receita", category: "Refeição", type: "Tipo", time: "Tempo",
-      difficulty: "Dificuldade", ingredients: "Ingredientes", steps: "Preparo",
+      servings: "Porções", difficulty: "Dificuldade", ingredients: "Ingredientes", steps: "Preparo",
       reset: "Novo", save: "Salvar receita",
     },
     categories: {
@@ -455,7 +455,7 @@ const translations = {
     formLabels: {
       photo: "Recipe photo", addPhoto: "Add photo", removePhoto: "Remove photo",
       name: "Recipe name", category: "Meal", type: "Type", time: "Time",
-      difficulty: "Difficulty", ingredients: "Ingredients", steps: "Instructions",
+      servings: "Servings", difficulty: "Difficulty", ingredients: "Ingredients", steps: "Instructions",
       reset: "New", save: "Save recipe",
     },
     categories: {
@@ -535,6 +535,7 @@ const recipeName = document.querySelector("#recipeName");
 const recipeCategory = document.querySelector("#recipeCategory");
 const recipeType = document.querySelector("#recipeType");
 const recipeTime = document.querySelector("#recipeTime");
+const recipeServings = document.querySelector("#recipeServings");
 const recipeDifficulty = document.querySelector("#recipeDifficulty");
 const recipeIngredients = document.querySelector("#recipeIngredients");
 const recipeSteps = document.querySelector("#recipeSteps");
@@ -602,6 +603,7 @@ function normalizeRecipe(recipe) {
     category,
     type: recipeTypes.includes(recipe.type) ? recipe.type : inferType(recipe),
     time: Number(recipe.time) || 30,
+    servings: Number(recipe.servings) || 4,
     difficulty: recipe.difficulty || "Easy",
     favorite: Boolean(recipe.favorite),
     photo: recipe.photo || placeholderPhotos[category],
@@ -668,6 +670,19 @@ function renderViews() {
   });
 }
 
+// ── INGREDIENT SCALING ───────────────────────────
+function scaleIngredient(text, baseServings, currentServings) {
+  if (baseServings === currentServings) return text;
+  const ratio = currentServings / baseServings;
+  return text.replace(/(\d+([.,]\d+)?)/g, (match) => {
+    const num = parseFloat(match.replace(",", "."));
+    if (isNaN(num)) return match;
+    const scaled = num * ratio;
+    const result = scaled % 1 === 0 ? scaled.toString() : scaled.toFixed(1).replace(".", ",");
+    return result;
+  });
+}
+
 function renderRecipes() {
   const tx = t();
   const loadingState = document.querySelector("#loadingState");
@@ -710,16 +725,48 @@ function renderRecipes() {
     card.querySelector(".difficulty-meta").textContent = tx.difficulties[recipe.difficulty] || recipe.difficulty;
     favorite.classList.toggle("active", recipe.favorite);
 
+    // Servings control
+    const baseServings = recipe.servings || 4;
+    let currentServings = baseServings;
+    const servingsCount = card.querySelector(".servings-count");
+    const servingsLabel = card.querySelector(".servings-label");
+    const servingsDec = card.querySelector(".servings-dec");
+    const servingsInc = card.querySelector(".servings-inc");
     const ingredientPreview = card.querySelector(".ingredient-preview");
-    recipe.ingredients.slice(0, 4).forEach((ingredient) => {
-      const item = document.createElement("li");
-      item.textContent = ingredient;
-      ingredientPreview.append(item);
+
+    servingsLabel.textContent = lang === "pt" ? "porções" : "servings";
+
+    function updateServings() {
+      servingsCount.textContent = currentServings;
+      servingsDec.disabled = currentServings <= 1;
+      ingredientPreview.replaceChildren();
+      recipe.ingredients.slice(0, 5).forEach((ingredient) => {
+        const item = document.createElement("li");
+        const scaled = scaleIngredient(ingredient, baseServings, currentServings);
+        item.textContent = scaled;
+        if (currentServings !== baseServings) item.classList.add("scaled");
+        ingredientPreview.append(item);
+      });
+    }
+
+    servingsDec.addEventListener("click", () => {
+      if (currentServings > 1) { currentServings--; updateServings(); }
     });
+
+    servingsInc.addEventListener("click", () => {
+      if (currentServings < 99) { currentServings++; updateServings(); }
+    });
+
+    updateServings();
 
     card.querySelector(".steps-preview").textContent = recipe.steps || tx.noSteps;
     card.querySelector(".add-shopping").textContent = tx.addShopping;
-    card.querySelector(".add-shopping").addEventListener("click", () => addIngredients(recipe.ingredients));
+    card.querySelector(".add-shopping").addEventListener("click", () => {
+      const scaledIngredients = recipe.ingredients.map((ing) =>
+        scaleIngredient(ing, baseServings, currentServings)
+      );
+      addIngredients(scaledIngredients);
+    });
     card.querySelector(".edit-recipe").addEventListener("click", () => editRecipe(recipe.id));
     card.querySelector(".delete-recipe").addEventListener("click", () => deleteRecipe(recipe.id));
     favorite.addEventListener("click", () => toggleFavorite(recipe.id));
@@ -890,6 +937,7 @@ function editRecipe(id) {
   recipeCategory.value = recipe.category;
   recipeType.value = recipe.type;
   recipeTime.value = recipe.time;
+  recipeServings.value = recipe.servings || 4;
   recipeDifficulty.value = recipe.difficulty;
   recipeIngredients.value = recipe.ingredients.join("\n");
   recipeSteps.value = recipe.steps;
@@ -1023,9 +1071,14 @@ function applyTranslations() {
   if (labels[1]) labels[1].firstChild.textContent = tx.formLabels.category;
   if (labels[2]) labels[2].firstChild.textContent = tx.formLabels.type;
   if (labels[3]) labels[3].firstChild.textContent = tx.formLabels.time;
-  if (labels[4]) labels[4].firstChild.textContent = tx.formLabels.difficulty;
-  if (labels[5]) labels[5].firstChild.textContent = tx.formLabels.ingredients;
-  if (labels[6]) labels[6].firstChild.textContent = tx.formLabels.steps;
+  if (labels[4]) labels[4].firstChild.textContent = tx.formLabels.servings;
+  if (labels[5]) labels[5].firstChild.textContent = tx.formLabels.difficulty;
+  if (labels[6]) labels[6].firstChild.textContent = tx.formLabels.ingredients;
+  if (labels[7]) labels[7].firstChild.textContent = tx.formLabels.steps;
+
+  // Translate servings label in recipe form
+  const recipeServingsLabel = document.querySelector("#recipeServingsLabel");
+  if (recipeServingsLabel) recipeServingsLabel.textContent = tx.formLabels.servings;
 
   document.querySelector(".file-label").firstChild.textContent = tx.formLabels.addPhoto;
   document.querySelector("#removePhoto").textContent = tx.formLabels.removePhoto;
@@ -1076,6 +1129,7 @@ recipeForm.addEventListener("submit", (event) => {
     category,
     type: recipeType.value,
     time: Number(recipeTime.value),
+    servings: Number(recipeServings.value) || 4,
     difficulty: recipeDifficulty.value,
     ingredients,
     steps: recipeSteps.value.trim(),
